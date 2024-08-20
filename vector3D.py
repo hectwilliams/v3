@@ -26,14 +26,16 @@ class Vector3:
         self.y=value[1]
         self.z=value[2]
     vector=property(getxyz,setxyz)
-    def __mul__(self, val):
-        if type(val) in [float, int]:
-            self.x =self.x*val
-            self.y =self.y*val
-            self.z =self.z*val
-            return self
-        elif [isinstance(ele, numbers.Number) for ele in val] ==[True, True, True] and len(val)==3:
-            return self._callmethod('mult_tuple', (val,))
+    def __repr__(self):
+        return f'Vector3( x = { self.x }, y = { self.y }, z = { self.z } )'
+    def __mul__(self, value):
+        return Vector3(self.x * value, self.y * value, self.z * value)
     def __rmul__(self, val):
         return self.__mul__(val)
-   
+    def __add__(self, value):
+        return Vector3(self.x + value, self.y + value, self.z + value)
+    def __sub__(self, value):
+        return Vector3(self.x - value, self.y - value, self.z - value)
+    def __truediv__(self, value):
+        return Vector3(self.x/value, self.y/value, self.z/value)
+            
