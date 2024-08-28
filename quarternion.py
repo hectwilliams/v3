@@ -32,17 +32,15 @@ class Quarternion():
         self.x = 0.0
         self.y = 0.0
         self.z = math.sin(theta_over_2)
-    def set_to_rotate_about_axis(self, vector: vector3.Vector3, theta: float):
+    def set_to_rotate_about_axis(self, axis: vector3.Vector3, theta: float):
         # axis must be normalized 
-        print(vector3.vector_mag(vector) - 1.0)
-        if   ((vector3.vector_mag(vector) - 1.0) >= 0.01):
-            raise(RuntimeError)
+        assert((vector3.vector_mag(axis) - 1.0) < 0.01)
         theta_over_2 = theta * 0.5
         sin_theta_over_2 = math.sin(theta_over_2)
         self.w = math.cos(theta_over_2)
-        self.x *= sin_theta_over_2
-        self.y *= sin_theta_over_2
-        self.z *= sin_theta_over_2
+        self.x = axis.x * sin_theta_over_2
+        self.y = axis.y * sin_theta_over_2
+        self.z = axis.z * sin_theta_over_2
     def set_to_rotate_object_to_inertial(self, orientation: euler_angles.EulerAngles): 
         c_pitch, s_pitch = cos_sin(orientation.pitch*0.5)
         c_heading, s_heading = cos_sin(orientation.heading*0.5)

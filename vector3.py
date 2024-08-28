@@ -4,9 +4,10 @@ import multiprocessing.process
 from decimal import Decimal
 from math import sqrt
 import numbers 
+import numpy as np
 
 class Vector3():
-    def __init__(self,x=0, y=0, z=0):
+    def __init__(self,x=np.float64(0.0), y=np.float64(0.0), z=np.float64(0.0)):
         self.x=x
         self.y=y
         self.z=z
@@ -56,10 +57,9 @@ class Vector3():
     def __eq__(self, vector3) -> bool:
         return all([value == vector3.__dict__[attr] for attr,value in self.__dict__.items()] )
     def normalize(self) :
-        print(self)
-        mag_sq = self.x**2 + self.y**2 + self.z**2
-        if mag_sq > 0:
-            one_over_sqrt_mag_sq = 1 / sqrt(mag_sq)
+        mag_sq = self.x**2.0 + self.y**2.0 + self.z**2.0
+        if mag_sq > 0.0:
+            one_over_sqrt_mag_sq = 1.0 / sqrt(mag_sq)
             self.x *= one_over_sqrt_mag_sq
             self.y *= one_over_sqrt_mag_sq
             self.z *= one_over_sqrt_mag_sq

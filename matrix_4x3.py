@@ -2,21 +2,23 @@ import vector3
 import euler_angles
 import quarternion
 import rotation_matrix
+import numpy as np 
+
 
 class Matrix4x3():
     def __init__(self):
-        self.m11 = 0
-        self.m12 = 0 
-        self.m13 = 0 
-        self.m21 = 0 
-        self.m22 = 0 
-        self.m23 = 0 
-        self.m31 = 0 
-        self.m32 = 0 
-        self.m33 = 0
-        self.tx = 0
-        self.ty = 0
-        self.tz = 0
+        self.m11 = 0.0
+        self.m12 = 0.0
+        self.m13 = 0.0
+        self.m21 = 0.0
+        self.m22 = 0.0
+        self.m23 = 0.0
+        self.m31 = 0.0
+        self.m32 = 0.0
+        self.m33 = 0.0
+        self.tx = 0.0
+        self.ty = 0.0
+        self.tz = 0.0
         self.identity()
     def __repr__(self) -> str:
         return (f'self.m11={self.m11} self.m12={self.m12} self.m13={self.m13}\n' 
@@ -120,7 +122,7 @@ class Matrix4x3():
             self.m21 = -s_axis; self.m22 = c_axis; self.m23 = 0.0
             self.m31 = 0.0; self.m32 = 0.0; self.m33 = 1.0
         self.tx = self.ty = self.tz = 0.0
-    def setup_rotate_arbitrary(self, axis: vector3.Vector3, theta: float):
+    def setup_rotate_arbitrary(self, axis: vector3.Vector3, theta: np.float64):
         """
             setup matrix to perform a rotation about arbitrary axis
         """
@@ -142,19 +144,19 @@ class Matrix4x3():
         Args:
             q - quarternion.Quarternion
         """
-        ww = 2.0 * q.w 
-        xx = 2.0 * q.x 
-        yy = 2.0 * q.y 
-        zz = 2.0 * q.z
-        self.m11 = 1.0 - yy*q.y - zz*q.z
+        ww = np.float64(2.0) * q.w 
+        xx = np.float64(2.0) * q.x 
+        yy = np.float64(2.0) * q.y 
+        zz = np.float64(2.0) * q.z
+        self.m11 = np.float64(1.0) - yy*q.y - zz*q.z
         self.m12 = xx*q.y + ww*q.z
         self.m13 = xx*q.z - ww*q.x
         self.m21 = xx*q.y - ww*q.z
-        self.m22 = 1.0 - xx*q.x - zz*q.z 
+        self.m22 = np.float64(1.0) - xx*q.x - zz*q.z 
         self.m23 = yy*q.z + ww*q.x
         self.m31 = xx*q.z + ww*q.y
         self.m32 = yy*q.z - ww*q.x 
-        self.m33 = 1.0 - xx*q.x - yy*q.y
+        self.m33 = np.float64(1.0) - xx*q.x - yy*q.y
         self.tx = self.ty = self.tz = 0.0
     def setup_scale(self, v):
         """
