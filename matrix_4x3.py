@@ -273,7 +273,16 @@ class Matrix4x3():
         self.m32 = -2.0*n.y*n.z 
         self.m33 = 1.0 - 2.0*n.z*n.z
         self.tx = self.ty = self.tz = 0.0 
-
+    def to_numpy(self) ->np.ndarray:
+        """
+            get numpy type array
+        """
+        return np.array([
+            [self.m11, self.m12, self.m13],
+            [self.m21, self.m22, self.m23],
+            [self.m31, self.m32, self.m33],
+            ]
+        )
 def vector_mult(p: vector3. Vector3, m: Matrix4x3)->vector3.Vector3:
     """ vector * matrix"""
     return vector3.Vector3(
