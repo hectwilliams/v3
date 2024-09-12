@@ -9,6 +9,7 @@ import matrix_4x3
 import multiprocessing as mp 
 import ctypes
 import time 
+import aabb3
 
 def set_axis(ax):
     ax.set_xlabel('x label')
@@ -19,12 +20,21 @@ def set_axis(ax):
     ax.set_zlim(-axi_length, axi_length)
 def fixed_circle(shared_mem, lock):
     global fig
+    aabb3_obj= aabb3.AABB()
     N = M = 50 
     ax = fig.add_subplot(projection='3d')
     set_axis(ax)
     data = np.frombuffer(shared_mem.get_obj())
+    aabb3_obj.acquire(data[0*M*N:1*M*N], 0)
+    aabb3_obj.acquire(-data[0*M*N:1*M*N], 0)
+    aabb3_obj.acquire(data[1*M*N:2*M*N], 1)
+    aabb3_obj.acquire(-data[1*M*N:2*M*N], 1)
+    aabb3_obj.acquire(data[2*M*N:3*M*N], 2)
+    aabb3_obj.acquire(-data[2*M*N:3*M*N], 2)
+    aabb3_obj.box(ax)
+
     with lock:
-        ax.scatter( [data[0*M*N:1*M*N],  data[0*M*N:1*M*N] ], [data[1*M*N:2*M*N],   data[1*M*N:2*M*N] ], [data[2*M*N:3*M*N], -data[2*M*N:3*M*N] ],  marker='*',  c='blue',  s=1 )
+        ax.scatter( [data[0*M*N:1*M*N],  data[0*M*N:1*M*N] ], [data[1*M*N:2*M*N],   data[1*M*N:2*M*N] ], [data[2*M*N:3*M*N], -data[2*M*N:3*M*N] ],  marker='*',  c='blue',  s=1 , alpha=0.2)
     while True:
         plt.pause(0.1)
         time.sleep(0.0)
@@ -33,22 +43,33 @@ def rotate_cicle(shared_mem_c,shared_mem_s, lock):
     N = M = 50 
     ax = fig.add_subplot( projection='3d')
     set_axis(ax)
+    aabb3_obj= aabb3.AABB()
     q = quarternion.Quarternion() 
     m_ = matrix_4x3.Matrix4x3()
     q.set_to_rotate_about_z(math.radians(30))
     m_.from_quarternion(q)
     m = m_.to_numpy()
+
     data_c = np.frombuffer(shared_mem_c.get_obj())
     data_s = np.frombuffer(shared_mem_s.get_obj())
     scatter_c = ax.scatter( [data_c[0*M*N:1*M*N],  data_c[0*M*N:1*M*N] ], [data_c[1*M*N:2*M*N],   data_c[1*M*N:2*M*N] ], [data_c[2*M*N:3*M*N], -data_c[2*M*N:3*M*N] ],  marker='*',  c='green',  s=1 )
     scatter_s = ax.scatter( [data_s[0*M*N:1*M*N],  data_s[0*M*N:1*M*N] ], [data_s[1*M*N:2*M*N],   data_s[1*M*N:2*M*N] ], [data_s[2*M*N:3*M*N], -data_s[2*M*N:3*M*N] ],  marker='*',  c='green',  s=1 )
+    aabb3_obj.acquire(data_c[0*M*N:1*M*N], 0)
+    aabb3_obj.acquire(-data_c[0*M*N:1*M*N], 0)
+    aabb3_obj.acquire(data_c[1*M*N:2*M*N], 1)
+    aabb3_obj.acquire(-data_c[1*M*N:2*M*N], 1)
+    aabb3_obj.acquire(data_c[2*M*N:3*M*N], 2)
+    aabb3_obj.acquire(-data_c[2*M*N:3*M*N], 2)
+    aabb3_obj.box(ax)
     plt.pause(0.1)
+    
     while True:
         with lock:
+            aabb3_obj.rotate(m,ax)
             vert_updated_c = np.matmul(np.c_[ (data_c[0*M*N:1*M*N], data_c[1*M*N:2*M*N], data_c[2*M*N:3*M*N])] , m) # verties matrix * rotation matrix
-            shared_mem_c[:] = np.hstack(( vert_updated_c[:,0], vert_updated_c[:,1], vert_updated_c[:,2] ))
+            shared_mem_c[:] = np.hstack(( vert_updated_c[:,0], vert_updated_c[:,1], vert_updated_c[:,2] )) # update shared mem
             vert_updated_s = np.matmul(np.c_[ (data_s[0*M*N:1*M*N], data_s[1*M*N:2*M*N], data_s[2*M*N:3*M*N])] , m) # verties matrix * rotation matrix
-            shared_mem_s[:] = np.hstack(( vert_updated_s[:,0], vert_updated_s[:,1], vert_updated_s[:,2] ))
+            shared_mem_s[:] = np.hstack(( vert_updated_s[:,0], vert_updated_s[:,1], vert_updated_s[:,2] )) # update shared mem
         data_c = np.frombuffer(shared_mem_c.get_obj())
         data_s = np.frombuffer(shared_mem_s.get_obj())
         scatter_c.remove()
