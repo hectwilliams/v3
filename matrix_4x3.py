@@ -23,7 +23,8 @@ class Matrix4x3():
     def __repr__(self) -> str:
         return (f'self.m11={self.m11} self.m12={self.m12} self.m13={self.m13}\n' 
                 f'self.m21={self.m21} self.m22={self.m22} self.m23={self.m23}\n'
-                f'self.m31={self.m31} self.m32={self.m32} self.m33={self.m33}'
+                f'self.m31={self.m31} self.m32={self.m32} self.m33={self.m33}\n'
+                f'self.m31={self.tx} self.m32={self.ty} self.m33={self.tz}'
                 )
     def identity(self):
         self.m11 = 1.0; self.m12 = 0.0; self.m13 = 0.0 
