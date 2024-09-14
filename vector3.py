@@ -63,7 +63,12 @@ class Vector3():
             self.x *= one_over_sqrt_mag_sq
             self.y *= one_over_sqrt_mag_sq
             self.z *= one_over_sqrt_mag_sq
-
+    def to_numpy(self):
+        return np.array([
+            self.x,
+            self.y, 
+            self.z
+        ])
 # NonMember Functions
 def vector_mag(vector: Vector3):
     return vector.x**2 + vector.y**2 + vector.z**2
