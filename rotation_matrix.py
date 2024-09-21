@@ -1,6 +1,5 @@
 """ Orthogonal matrix used to rotate coordindate space"""
 import vector3
-import euler_angles
 import quarternion
 
 class RotationMatrix:

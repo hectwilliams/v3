@@ -1,7 +1,5 @@
 import vector3 
-import euler_angles
 import math 
-import quarternion
 
 class Quarternion():
     def __init__(self) -> None:
@@ -41,7 +39,7 @@ class Quarternion():
         self.x = axis.x * sin_theta_over_2
         self.y = axis.y * sin_theta_over_2
         self.z = axis.z * sin_theta_over_2
-    def set_to_rotate_object_to_inertial(self, orientation: euler_angles.EulerAngles): 
+    def set_to_rotate_object_to_inertial(self, orientation): 
         c_pitch, s_pitch = cos_sin(orientation.pitch*0.5)
         c_heading, s_heading = cos_sin(orientation.heading*0.5)
         c_bank, s_bank = cos_sin(orientation.bank*0.5)
@@ -49,7 +47,7 @@ class Quarternion():
         self.x = c_heading*s_heading*c_bank + s_heading*c_pitch*s_bank
         self.y = -c_heading*s_pitch*s_bank + s_heading*c_pitch*c_bank
         self.z = -s_heading*s_pitch*c_bank + c_heading*c_pitch*s_bank
-    def set_to_rotate_inertial_to_object(self, orientation: euler_angles.EulerAngles): 
+    def set_to_rotate_inertial_to_object(self, orientation): 
         c_pitch, s_pitch = cos_sin(orientation.pitch*0.5)
         c_heading, s_heading = cos_sin(orientation.heading*0.5)
         c_bank, s_bank = cos_sin(orientation.bank*0.5)  
@@ -147,7 +145,8 @@ def conjugate(q: Quarternion) -> Quarternion:
     result.z = -q.z 
     return result
 def pow(q: Quarternion, exponent: float) -> Quarternion:
-    if abs(q.w) >0.999:
+    if abs(q.w) >0.999999999:
+        print(q.w)
         # identity quaternion
         return q 
     result = Quarternion()

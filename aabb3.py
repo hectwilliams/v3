@@ -1,8 +1,12 @@
 """ Bounding Box """
+import matplotlib.axes
 import numpy as np 
 import vector3
 import matplotlib.pyplot as plt 
+import matplotlib
+import matrix_4x3
 
+LINE_MAP = [ [0,1], [1,3], [2,3], [0,2],[0,4], [4,6], [2,6], [4,5],[6,7],[5,7],[1,5],[5,7],[3,7],[1,3]]
 class AABB():
     def __repr__(self) -> str:
         return ('{}\n{}\n').format(self.vmax, self.vmin)
@@ -10,15 +14,16 @@ class AABB():
         self.vmin = vector3.Vector3()
         self.vmax = vector3.Vector3()
         self.box_vertices = np.array([vector3.Vector3() for _ in range(8)])
-        self.plot_buffer = []
+        self.plot_buffer = [matplotlib.axes.Axes for _ in range(len(LINE_MAP))]
         self.vsize = np.zeros((3))
         self.center = np.zeros((3))
+        self.is_on = False
     def empty(self)-> None:
-        big_number = np.finfo(np.float64).max
-        self.vmin.x = self.vmin.y = self.vmin.z = big_number
+        big_number = np.finfo(np.float16).max
         self.vmax.x = self.vmax.y = self.vmax.z = -big_number
+        self.vmin.x = self.vmin.y = self.vmin.z = big_number
     def is_empty(self)->bool:
-        if self.vmin.x > self.vmax.x | self.vmin.y > self.vmax.y | self.vmin.z > self.vmax.z:
+        if (self.vmin.x > self.vmax.x) | (self.vmin.y > self.vmax.y) | (self.vmin.z > self.vmax.z):
             return True 
         return False 
     def acquire(self, data: np.ndarray, axis = 0):
@@ -34,22 +39,34 @@ class AABB():
             if data.min()< self.vmin.y:
                 self.vmin.y = data.min()
         elif axis == 2:
-            if data.max()> self.vmax.z:
+            # print(axis, data.min(), data.max())
+            if data.max() > self.vmax.z:
                 self.vmax.z = data.max()
+
             if data.min()< self.vmin.z:
                 self.vmin.z = data.min()
         self.size = self.vmax - self.vmin
         self.center = (self.vmax + self.vmin)/2
+    def xform(self, m: matrix_4x3.Matrix4x3, ax):
+        for i in range(self.box_vertices.size):
+            self.box_vertices[i] = matrix_4x3.vector_mult(self.box_vertices[i], m)
     def box(self, ax):
-        """plot bounding box"""
-        # draw bounding box
-        set_vertices(self.vmin, self.vmax, self.box_vertices) # 8 points required for bbox 
-        line_map = [ [0,1], [1,3], [2,3], [0,2],[0,4], [4,6], [2,6], [4,5],[6,7],[5,7],[1,5],[5,7],[3,7],[1,3]]
-        for a, b in line_map:
-            v_a = self.box_vertices[a]
-            v_b = self.box_vertices[b]
-            self.plot_buffer.append(ax.plot( [v_a.x, v_b.x] , [v_a.y, v_b.y], [v_a.z, v_b.z] , c='black'))
+        """draw bounding box"""
+        for i in range(len(LINE_MAP)):
+            i_a = LINE_MAP[i][0]
+            i_b = LINE_MAP[i][1]
+            v_a = self.box_vertices[i_a]
+            v_b = self.box_vertices[i_b]
+            self.plot_buffer[i] = ax.plot( [v_a.x, v_b.x] , [v_a.y, v_b.y], [v_a.z, v_b.z] , c='black', alpha=0.3)
+        self.is_on = True
+    def remove_box(self):
+        if self.is_on:
+            for i in range(len(LINE_MAP)):
+                for l in self.plot_buffer[i]:
+                    l.remove() 
+        self.is_on = False
     def rotate(self, m, ax):
+        pass
         # v_matrix = np.array(list(map(lambda v: [v.x, v.y, v.z], self.box_vertices)))
 
         # # compute xmin_new, xmax_new (use original bounding box limits to find new bound for x coordinate after transformation )
@@ -81,27 +98,24 @@ class AABB():
         # self.vmin.x = x_min
         # self.vmin.y = y_min
         # self.vmin.z = z_min
-
-        while len(self.plot_buffer):
-            lines = self.plot_buffer.pop()
-            for l in lines:
-                l.remove()
-        self.box(ax)
-
-    def update_box(self,pts) ->None:
-        data = np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], pts ))).T
+        # self.box(ax)
+    def update_box(self, pts, ax) ->None:
         self.empty()
+        data = np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], pts ))).T
         self.acquire(data[0], 0)
         self.acquire(data[1], 1)
         self.acquire(data[2], 2)
-
+        set_vertices(self.vmin, self.vmax, self.box_vertices) # 8 points required for bbox 
+        self.box(ax)
+    def intersection_to_obj(self, obj):
+        pass
 def set_vertices(vmin, vmax, vertcies):
     """ using vmax and vmax vector assign 8 points for bounding box"""
     #0
     vertcies[0].x = vmin.x
     vertcies[0].y = vmin.y 
     vertcies[0].z = vmin.z
-    
+
     #1
     vertcies[1].x = vmax.x 
     vertcies[1].y = vmin.y 

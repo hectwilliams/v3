@@ -1,5 +1,5 @@
 import vector3
-import euler_angles
+# import euler_angles
 import quarternion
 import rotation_matrix
 import numpy as np 
@@ -7,18 +7,18 @@ import numpy as np
 
 class Matrix4x3():
     def __init__(self):
-        self.m11 = 0.0
-        self.m12 = 0.0
-        self.m13 = 0.0
-        self.m21 = 0.0
-        self.m22 = 0.0
-        self.m23 = 0.0
-        self.m31 = 0.0
-        self.m32 = 0.0
-        self.m33 = 0.0
-        self.tx = 0.0
-        self.ty = 0.0
-        self.tz = 0.0
+        self.m11 = np.float32(0)
+        self.m12 = np.float32(0)
+        self.m13 = np.float32(0)
+        self.m21 = np.float32(0)
+        self.m22 = np.float32(0)
+        self.m23 = np.float32(0)
+        self.m31 = np.float32(0)
+        self.m32 = np.float32(0)
+        self.m33 = np.float32(0)
+        self.tx =  np.float32(0)
+        self.ty =  np.float32(0)
+        self.tz =  np.float32(0)
         self.identity()
     def __repr__(self) -> str:
         return (f'self.m11={self.m11} self.m12={self.m12} self.m13={self.m13}\n' 
@@ -30,7 +30,7 @@ class Matrix4x3():
         self.m11 = 1.0; self.m12 = 0.0; self.m13 = 0.0 
         self.m21 = 0.0; self.m22 = 1.0; self.m23 = 0.0 
         self.m31 = 0.0; self.m32 = 0.0; self.m33 = 1.0
-        self.tx = 0.0;  self.ty = 0.0;  self.tz = 1.0 
+        self.tx = 0.0;  self.ty = 0.0;  self.tz = 0.0 
     def zero_translation(self):
         self.tx = self.ty = self.tz = 0.0 
     def set_translation(self, d: vector3.Vector3):
@@ -106,7 +106,7 @@ class Matrix4x3():
                 2 => rotate  about the y-axis
                 3 => rotate  about the z-axis
         """
-        c_axis, s_axis = quarternion.cos_sin(theta)
+        c_axis, s_axis = cos_sin(theta)
         if axis == 1:
             # rotate about x-axis 
             self.m11 = 1.0; self.m12 = 0.0; self.m13 = 0.0 
@@ -128,7 +128,7 @@ class Matrix4x3():
             setup matrix to perform a rotation about arbitrary axis
         """
         assert(abs(axis*axis - 1.0) < 0.01) # unit vector sanity check 
-        cos, sin = quarternion.cos_sin(theta)
+        cos, sin = cos_sin(theta)
         self.m11 = axis.x*axis.x * (1- cos) + cos
         self.m12 = axis.x*axis.y * (1 - cos) + axis.z*sin
         self.m13 = axis.x*axis.z * (1 - cos) - axis.y*sin
@@ -356,3 +356,6 @@ def get_position_from_parent_local_matrix(m: Matrix4x3)-> vector3.Vector3:
 def get_position_from_local_to_parent_matrix(m: Matrix4x3)->vector3.Vector3:
     """extract position of an object given a local -> pareent transformation (e.g. object -> world matrix)"""
     return vector3.Vector3(m.tx, m.ty, m.tz)
+def cos_sin(theta: float) -> tuple:
+    """Compute sin and cos angle for quaternion."""
+    return math.cos(theta), math.sin(theta)

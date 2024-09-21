@@ -43,7 +43,7 @@ class Vector3():
         if isinstance(value, numbers.Number):
             return Vector3(self.x - value, self.y - value, self.z - value)
         if isinstance(value, Vector3):
-            return Vector3(self.x - value.x, self.y - value.y, self.z - value.z)
+            return Vector3( np.subtract(self.x, value.x), np.subtract(self.y, value.y), np.subtract(self.z, value.z))
         raise TypeError("Vector3 or scalar are permitted")
     def __truediv__(self, value):
         try:
@@ -68,7 +68,19 @@ class Vector3():
             self.x,
             self.y, 
             self.z
-        ])
+        ], dtype=np.float32)
+    def set_x(self, value: np.float32):
+        self.x = value
+    def set_y(self, value: np.float32):
+        self.y = value
+    def set_z(self, value: np.float32):
+        self.z = value
+    def rand(self, k=1):
+        self.x = np.random.random()*k
+        self.y = np.random.random()*k
+        self.z = np.random.random()*k
+    def copy(self):
+        return Vector3(self.x, self.y, self.z)
 # NonMember Functions
 def vector_mag(vector: Vector3):
     return vector.x**2 + vector.y**2 + vector.z**2
