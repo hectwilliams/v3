@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.tri as tri
 import matplotlib.pyplot as plt
 import asyncio
-
+import sys 
 async def shade_cell_left_diagnal(ax):
     """create 2d triangle mesh,shading two triangles per cell """
     tpcs = [] 
@@ -53,8 +53,6 @@ async def shade_cell_bisectors(ax):
             tcp = tpcs.pop(0)
             tcp.remove()
 
-plt.ion()
-plt.show()
 
 # define the vertices
 origin=[0,0]
@@ -70,11 +68,13 @@ ci = np.arange(0, nsteps[0] - 1)
 cj = np.arange(0, nsteps[1] - 1)
 cii, cjj = np.meshgrid(ci, cj, indexing='ij')
 corners = np.array([[0, 1, 0, 1], [0, 0, 1, 1]])
-i = cii[:, :, None] + corners[None, None, 0, :, ]
-j = cjj[:, :, None] + corners[None, None, 1, :, ]
+# [bottom_left, bottom_right, top_left, top_right] (9x3) Elements are cell vertices for a row of contiguious cells 
+i = cii[:, :, None] + corners[None, None, 0, :, ]  
+j = cjj[:, :, None] + corners[None, None, 1, :, ]  
 # reshape the array so that its Nx4, either use -1 so
 # numpy guesses the shape or define as i.shape[0]*i.shape[1]
 gi_corners = (i+j*nsteps[0]).reshape(-1,4)
+
 # flatten xx, yy and then stack vertically, then rotate
 vertices = np.vstack([xx.flatten(),yy.flatten()])
 vertices_transpose = vertices.T
@@ -83,6 +83,7 @@ tri2 = gi_corners[:,[1,2,3]]
 triangles = np.vstack([tri1,tri2])
 ax[0].triplot(vertices_transpose[:,0],vertices_transpose[:,1], triangles[:])
 ax[1].triplot(vertices_transpose[:,0],vertices_transpose[:,1], triangles[:])
+plt.show()
 plt.pause(0.2)
 
 loop = asyncio.new_event_loop()
