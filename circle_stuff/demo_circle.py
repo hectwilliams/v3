@@ -106,13 +106,13 @@ def rotate_cicle_v3(shared_mem_c,shared_mem_s, lock):
 
     # store vectors in array 
     with lock:
-        for i in range( N*M): 
-            x = data_c[0*M*N + i]
-            y = data_c[1*M*N + i]
-            z = data_c[2*M*N + i]
-            vectors[i*2  ] = vector3.Vector3(x, y ,z)
-            vectors[i*2 + 1 ] = vector3.Vector3(x, y ,-z)
-        obj.add_collection(vectors)
+        x_temp = data_c[0 : N*M]
+        y_temp = data_c[N*M : 2*N*M]
+        z_temp = data_c[2*N*M : 3*N*M]
+        x = np.hstack((x_temp, x_temp))
+        y = np.hstack((y_temp, y_temp))
+        z = np.hstack((z_temp, -z_temp))
+        obj.load_mesh(x, y ,z)
         obj.show(ax)
         plt.pause(0.1)
     time.sleep(0.5)

@@ -5,30 +5,22 @@ import numpy as np
 import aabb3
 import time
 class Objectv3():
-    def __init__(self, n=50, center= np.zeros(shape=(3)), axes = None) -> None:
-        self.pts = np.array([vector3.Vector3(0, 0,0)  for i in range( (n**2) *2 ) ])
+    def __init__(self, center= np.zeros(shape=(3)), axes = None) -> None:
+        self.pts = np.array([vector3.Vector3(0, 0,0)  for _ in range( 3 ) ])
         self.axes = axes
         self.axes_pad = None 
         self.bbox = aabb3.AABB()
         self.center = center
-        self.n = n
     def add_collection(self, vertices):
-        assert( len(vertices) <= len(self.pts) )
-        for i in range(len(vertices)):
+        number_of_vertices = len(vertices)
+        self.pts = np.array([vector3.Vector3  for _ in range( len(number_of_vertices)) ])
+        for i in range(number_of_vertices):
             self.pts[i] = vertices[i]
-    def load_mesh(self, xx, yy, zz):
-        """load xx, yy, zz meshgrid data. This method requires object to have a zero vector origin"""
-        n_sq = np.multiply(self.n,self.n) 
-        for y_index in range( self.n ):
-            for x_index in range( self.n ):
-                index = self.n * y_index + x_index
-                x = xx[y_index][x_index]
-                y = yy[y_index][x_index]
-                z = zz[y_index][x_index]
-                v1 = vector3.Vector3( x,y,z)
-                self.pts[index] = v1
-                v2 = vector3.Vector3( -x, -y , -z)
-                self.pts[index + n_sq ] = v2
+    def load_mesh(self, xx_flatten, yy_flatten, zz_flatten):
+        """load flattened xx, yy, zz meshgrid data. This method r equires object to have a zero vector origin"""
+        self.pts = np.array([vector3.Vector3  for _ in range(len(xx_flatten) ) ])
+        for index in range(self.pts.size):
+            self.pts[index] = self.pts[index](xx_flatten[index], yy_flatten[index], zz_flatten[index])
     def set_axes(self, ax):
         self.axes = ax
     def show(self, ax, kwags = {} ):
@@ -40,9 +32,8 @@ class Objectv3():
             self.bbox.remove_box() # is there a way to hide the lines (hide method ?)
             self.axes_pad.remove()
     def xform(self, m: matrix_4x3.Matrix4x3):
-        for i in range(np.multiply(self.n,self.n)):
-            self.pts[i*2] = matrix_4x3.vector_mult(self.pts[i*2], m)
-            self.pts[i*2 + 1] = matrix_4x3.vector_mult(self.pts[i*2 +1], m)
+        for i in range(self.pts.size):
+            self.pts[i] = matrix_4x3.vector_mult(self.pts[i], m)
     def plot_point(self, v, ax, c= None):
         ax.scatter(v.x, v.y, v.z, marker='o', s= 1, c = 'black' if c== None else c)
     def show_bbox(self):
