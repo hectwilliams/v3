@@ -8,102 +8,83 @@ import numpy as np
 import vector3
 from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
 import time
-
-def cal_num_triangles(layers):
-    count = 0 
-    for layer_nth in range(2, layers + 1 ):
-        cc = 0
-        a = (layer_nth * 2) - 1
-        b =  a - 1
-        c =  b - 1
-        cc = a + 2*b + c
-        count += cc
-    return count 
-
+import matrix_4x3
+import quarternion
+import threading
+import circle_stuff.circle
+import tick
 class Tessellates():
-    def __init__(self, tri_main: triangle.Triangle, axes: matplotlib.axes.Axes , layers = 1 ):
-        if layers <= 0:
-            raise ValueError("layers argument must be > 0") 
-        elif layers == 1:
-            num_of_triangles = 1
-        elif layers > 1:
-            num_of_triangles = cal_num_triangles(layers) 
-        self.axes= axes
-        self.nodes = np.array([triangle for _ in range( num_of_triangles )])
-        self.parent = tri_main
-        tri_mirror = triangle.Triangle(v1 = tri_main.v3 , v2 = tri_main.v4, v3 = tri_main.v1, axes=axes)
-
-
-        self.mesh(tri_main, layers)
-        # self.sweep()
-    def mesh(self, parent, layers):
-
-        """create mesh of triangles and adds to node array"""
-        curr_index = 0
         
-        d = dict(is_tessellate=True)
+    def __init__(self,  axes: matplotlib.axes.Axes , triangle_per_cell = 1, layers = 1 ,  **kwargs):
+        if triangle_per_cell <= 0:
+            raise ValueError('Each cell requires at least one triangle')
+        if layers < 0:
+            raise ValueError('layers must be greater than 0, 0th layer is the origin')
+        self.axes= axes
+        self.rng =  np.random.Generator(np.random.PCG64(42)) if 'rng' not in kwargs else kwargs['rng']
+        self.counter = tick.Tick()
+        triangles_in_layer = lambda l: np.sum( np.array([-1, 0, 0, 1]) + 2.0 * np.float16(l) ).astype(dtype=np.int16)
+        self.nodes = np.array([triangle for _ in range( triangle_per_cell* (1  + layers*triangles_in_layer(layers)  ) )]   )
 
-        for i in range(1,layers):
-            # start vertices to jump from origin, set/add vertices on path #
-            v1_init =  i*parent.e21 + parent.v1.to_numpy()
-            v2_init =  i*parent.e21 + parent.v2.to_numpy()
-            v3_init =  i*parent.e21 + parent.v3.to_numpy()
-            self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1_init) ,  v2=vector3.Vector3(*v2_init), v3=vector3.Vector3(*v3_init), axes=self.axes, **d)
-            self.nodes[curr_index].axes.text( *self.nodes[curr_index].center.to_numpy(), curr_index, fontsize=5)
-            curr_index+=1
+        if triangle_per_cell == 1:
+            v1,v2,v3,v4 = triangle.isosceles_triangle()
+            self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2,v3 ,axes=ax) 
+            self.nodes[0].show(axes, 'vertex_name')
+            self.mesh( self.nodes[0], layers)
+        elif triangle_per_cell == 2:
+            v1,v2,v3,v4 = triangle.obtuse_triangle(115)
+            self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2,v3 ,axes=ax) 
+            self.nodes[self.counter.tick()] = triangle.Triangle(v2, v4, v3 ,axes=ax) 
+            self.mesh( self.nodes[0], layers)
+            self.mesh( self.nodes[1], layers)
+        elif triangle_per_cell == 4:
+            v1,v2,v3,v4 = triangle.obtuse_triangle(115)
+            v_origin = (v1 + v2 + v3 + v4) / 4
+            self.nodes[self.counter.tick()] = triangle.Triangle(v1,v_origin,v3 ,axes=ax) 
+            self.nodes[self.counter.tick()] = triangle.Triangle(v2, v_origin, v1 ,axes=ax) 
+            self.nodes[self.counter.tick()] = triangle.Triangle(v2, v4, v_origin ,axes=ax) 
+            self.nodes[self.counter.tick()] = triangle.Triangle(v_origin, v4, v3 ,axes=ax) 
+            self.mesh( self.nodes[0], layers)
+            self.mesh( self.nodes[1], layers)
+            self.mesh( self.nodes[2], layers)
+            self.mesh( self.nodes[3], layers)
+        
+    def mesh(self, parent, layers):
+        if layers <= 0:
+            raise ValueError('layer > 0 is required')
 
-            for k in range(1, i):
-                # current position jumped in previous logic
-                for dir in [-1, 1]:
-                    # current position jumped forward(forward direction relative to vertex direction)
-                    v1 = dir*k*parent.e32 + v1_init
-                    v2 = dir*k*parent.e32 + v2_init
-                    v3 = dir*k*parent.e32 + v3_init
-                    self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1) ,  v2=vector3.Vector3(*v2), v3=vector3.Vector3(*v3), axes=self.axes, **d)
-                    curr_index+=1
+        # compute path 0
+        for layer in range(1, layers + 1):
+            for dir in [-1, 1]:
+                v1 = parent.v1.to_numpy() + layer*dir*parent.e31
+                v2 = parent.v2.to_numpy() + layer*dir*parent.e31
+                v3 = parent.v3.to_numpy() + layer*dir*parent.e31
+                self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1),vector3.Vector3(*v2),vector3.Vector3(*v3) ,axes=ax) 
+                for j in range(1, layers):
+                    v1_ = v1 + j*parent.e21
+                    v2_ = v2 + j*parent.e21
+                    v3_ = v3 + j*parent.e21
+                    self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1_),vector3.Vector3(*v2_),vector3.Vector3(*v3_) ,axes=ax) 
+                    v1_ = v1 - j*parent.e21
+                    v2_ = v2 - j*parent.e21
+                    v3_ = v3 - j*parent.e21
+                    self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1_),vector3.Vector3(*v2_),vector3.Vector3(*v3_) ,axes=ax) 
 
-            # reset to start , repeat previous vertices computation in reverse direction
-            v1_init =  -i*parent.e21 + parent.v1.to_numpy()
-            v2_init =  -i*parent.e21 + parent.v2.to_numpy()
-            v3_init =  -i*parent.e21 + parent.v3.to_numpy()
-            self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1_init) ,  v2=vector3.Vector3(*v2_init), v3=vector3.Vector3(*v3_init), axes=self.axes,  **d)
-            curr_index+=1
-
-            for k in range(1, i):
-                for dir in [1, -1]:
-                # current position jumped forward(forward direction relative to vertex direction)
-                    v1 = dir* k*parent.e32 + v1_init
-                    v2 = dir*k*parent.e32 + v2_init
-                    v3 = dir*k*parent.e32 + v3_init
-                    self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1) ,  v2=vector3.Vector3(*v2), v3=vector3.Vector3(*v3),axes=self.axes,  **d)
-                    curr_index+=1
-
-            # # reset origin vertices to jump from origin , compute vertices for perpindicular path on plane #
-            v1_init =  i*parent.e32 + parent.v1.to_numpy()
-            v2_init =  i*parent.e32 + parent.v2.to_numpy()
-            v3_init =  i*parent.e32 + parent.v3.to_numpy()
-            self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1_init) ,  v2=vector3.Vector3(*v2_init), v3=vector3.Vector3(*v3_init), axes=self.axes, **d)
-            curr_index+=1
-            for k in range(1, i+1):
-                for dir in [1, -1]:
-                    v1 = dir*k*parent.e21 + v1_init
-                    v2 = dir*k*parent.e21 + v2_init
-                    v3 = dir*k*parent.e21 + v3_init 
-                    self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1) ,  v2=vector3.Vector3(*v2), v3=vector3.Vector3(*v3), axes=self.axes, **d)
-                    curr_index+=1
-
-            v1_init =  -i*parent.e32 + parent.v1.to_numpy()
-            v2_init =  -i*parent.e32 + parent.v2.to_numpy()
-            v3_init =  -i*parent.e32 + parent.v3.to_numpy()
-            self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1_init) ,  v2=vector3.Vector3(*v2_init), v3=vector3.Vector3(*v3_init), axes=self.axes, **d)
-            curr_index+=1
-            for k in range(1, i+1):
-                for dir in [1, -1]:
-                    v1 = dir*k*parent.e21 + v1_init
-                    v2 = dir*k*parent.e21 + v2_init
-                    v3 = dir*k*parent.e21 + v3_init 
-                    self.nodes[curr_index] = triangle.Triangle(v1=vector3.Vector3(*v1) ,  v2=vector3.Vector3(*v2), v3=vector3.Vector3(*v3),axes=self.axes, **d)
-                    curr_index+=1
+            # # compute path 1
+            for dir in [-1, 1]:
+                v1 = parent.v1.to_numpy() + layer*dir*parent.e21
+                v2 = parent.v2.to_numpy() + layer*dir*parent.e21
+                v3 = parent.v3.to_numpy() + layer*dir*parent.e21
+                self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1),vector3.Vector3(*v2),vector3.Vector3(*v3) ,axes=ax) 
+                for j in range(1, layers + 1):
+                    v1_ = v1 + j*parent.e31
+                    v2_ = v2 + j*parent.e31
+                    v3_ = v3 + j*parent.e31
+                    self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1_),vector3.Vector3(*v2_),vector3.Vector3(*v3_) ,axes=ax) 
+                    v1_ = v1 - j*parent.e31
+                    v2_ = v2 - j*parent.e31
+                    v3_ = v3 - j*parent.e31
+                    self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1_),vector3.Vector3(*v2_),vector3.Vector3(*v3_) ,axes=ax) 
 
     def sweep(self):
         for tri in self.nodes:
@@ -120,28 +101,59 @@ class Tessellates():
         cloeset_node = None 
         pt = vector3.Vector3(  0.6989107852273501,  0.22167502757678514,  0.18477173225526122 )
         pt.rand(rng=rng) 
-        for node in self.nodes:
-            b = node.coord_to_barycentric(pt)
-            curr_distance = np.linalg.norm( np.abs (b - np.array([1/3, 1/3, 1/3]) )  )
-            if curr_distance < min_distance:
-                min_distance = curr_distance
-                cloeset_b = b
-                cloeset_node = node
-        coord = cloeset_node.barycentric_to_coord(*cloeset_b)
-        p = self.axes.scatter(*coord.to_numpy(), s=5, c='purple')
-        cloeset_node.highlight(None) 
-        plt.pause(0.8)
-        p.remove()
-        plt.pause(0.8)
+        # for node in self.nodes:
+        #     b = node.coord_to_barycentric(pt)
+        #     curr_distance = np.linalg.norm( np.abs (b - np.array([1/3, 1/3, 1/3]) )  )
+        #     if curr_distance < min_distance:
+        #         min_distance = curr_distance
+        #         cloeset_b = b
+        #         cloeset_node = node
+        # coord = cloeset_node.barycentric_to_coord(*cloeset_b)
+        # p = self.axes.scatter(*coord.to_numpy(), s=5, c='purple')
+        # cloeset_node.highlight(None) 
+        # plt.pause(0.8)
+        # p.remove()
+        # plt.pause(0.8)
+        # time.sleep(0.5)
     def intersection(self):
-        # generate ray
-        global rng
-        # start = np.array([rng.random() for i in range(3)])
-        start = np.array([1.0,0,-0.5])
-        end = np.array([-1.5,1,0])
-        self.axes.quiver(*start, *end)
+        # origin of ray
+        ray_origin = np.array([1.0,0.15,-0.5])
+        # ray length and direction
+        ray_delta = np.array([-1.5,1,0])
+        # ray_delta = self.rng.random(size=(3))
+        self.axes.quiver(*ray_origin, *ray_delta ,linewidth=0.5, arrow_length_ratio=0.11) # draw ray
         plt.pause(0.2)
         
+        # triangle intersection by ray
+        tri = self.nodes[17]
+        # surface normal (unnormalized)
+        n = tri.n 
+        # compute d value for plane equation
+        d = np.dot(n, tri.v1.to_numpy())
+        
+        ## ray triangle plane check
+        ray_orgin_dot_n = ray_origin.dot(n)
+        d_dot_n = ray_delta.dot(n)
+        # ray parrallel to triangle plane
+        if np.abs(d_dot_n) < 0.01:
+            print ('ray is parrllel to triangle')
+        # ray does not intersects with front of plane ( ray points in same direction as surface normal )
+        if  (d_dot_n > 0):
+            print ('ray does not intersect with front of plane')
+        ## compute parametric point of intersection
+        t = d - ray_orgin_dot_n
+        # ray origin lies behind plane ( or back side of polygon which is incorrect; we wish to intersect to front only)
+        if (t > 0):
+            print ('ray origin lies behind the plane')
+        t = t/d_dot_n
+        # assert(t >= 0)
+        if not t>=0:
+            print ('t is invalid')
+            return
+        p = ray_origin + ray_delta * t
+        # r y g  -->  draw intersect 
+        ax.scatter(*p, color= ['red', 'yellow', 'green'][self.rng.integers(0,3)] , s=3)
+
 if __name__ == '__main__':
     rng = np.random.Generator(np.random.PCG64(21))
     counter = 0
@@ -150,22 +162,19 @@ if __name__ == '__main__':
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     ax.tick_params(axis='both', which='major', labelsize=5)
-    widths = (-1,2)
+    widths = (-3,3)
     ax.set_xlim(*widths)
     ax.set_ylim(*widths)
     ax.set_zlim(*widths)
-    ax.view_init(16, -87, 0)
-    tri = triangle.Triangle(create_rand_triange=True ,axes=ax) # master triangle
-    coord = tri.barycentric_to_coord(0, 0, 1)
+    ax.view_init(30, -50, 0)
+    # tri = triangle.Triangle(create_rand_triange=True ,axes=ax) # master triangle
+    # coord = tri.barycentric_to_coord(0, 0, 1)
     # ax.scatter(*coord.to_numpy())
     # ax.scatter(*v.to_numpy(), c='pink', alpha=0.2)
-    b = tri.coord_to_barycentric(coord)
-    coord = tri.barycentric_to_coord(*b)
+    # b = tri.coord_to_barycentric(coord)
+    # coord = tri.barycentric_to_coord(*b)
     # v = tri.barycentric_to_coord(*b)
     # ax.scatter(*coord.to_numpy())
-    tessellate = Tessellates(tri, ax, layers=3)
-    tessellate.intersection()
-    for _ in range(10):
-        tessellate.test_random_pts()
-
+    tessellate = Tessellates(axes = ax, triangle_per_cell = 2, layers=1, rng=rng)
+    print(tessellate.nodes)
     plt.show()

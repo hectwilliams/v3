@@ -10,9 +10,7 @@ class Objectv3():
         self.axes = axes
         self.axes_pad = None 
         self.bbox = aabb3.AABB()
-        self.loaded_a_meshgrid = False
         self.center = center
-        self.center_v = vector3.Vector3(*center)
         self.n = n
     def add_collection(self, vertices):
         assert( len(vertices) <= len(self.pts) )
@@ -35,7 +33,7 @@ class Objectv3():
         self.axes = ax
     def show(self, ax, kwags = {} ):
         self.axes = ax
-        self.axes_pad = ax.scatter(*np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], self.pts ))).T, s=0.3, **kwags)
+        self.axes_pad = ax.scatter(*np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], self.pts ))).T, s=0.5, **kwags)
         self.bbox.update_box(self.pts, self.axes)
     def unshow(self):
         if self.axes_pad:
@@ -45,8 +43,6 @@ class Objectv3():
         for i in range(np.multiply(self.n,self.n)):
             self.pts[i*2] = matrix_4x3.vector_mult(self.pts[i*2], m)
             self.pts[i*2 + 1] = matrix_4x3.vector_mult(self.pts[i*2 +1], m)
-        # self.bbox.xform(m, self.axes)
-        # self.bbox.update_box(self.pts, self.axes)
     def plot_point(self, v, ax, c= None):
         ax.scatter(v.x, v.y, v.z, marker='o', s= 1, c = 'black' if c== None else c)
     def show_bbox(self):
@@ -66,27 +62,28 @@ class Objectv3():
         """
         if not self.bbox.is_on:
             raise RuntimeError('bounding box not enabled')
-        c = obj.center_v.copy()
+        c = obj.center.copy()
         test = False 
         for i in range(obj.pts.size):
             if obj.pts[i].x < self.bbox.vmin.x:
-                c.x = self.bbox.vmin.x
+                c[0] = self.bbox.vmin.x
             elif obj.pts[i].x > self.bbox.vmax.x:
-                c.x = self.bbox.vmax.x
+                c[0] = self.bbox.vmax.x
             if obj.pts[i].y < self.bbox.vmin.y:
-                c.y = self.bbox.vmin.y
+                c[1] = self.bbox.vmin.y
             elif obj.pts[i].y > self.bbox.vmax.y:
-                c.y = self.bbox.vmax.y
+                c[1] = self.bbox.vmax.y
             if obj.pts[i].z < self.bbox.vmin.z:
-                c.z = self.bbox.vmin.z
+                c[2] = self.bbox.vmin.z
             elif obj.pts[i].z > self.bbox.vmax.z:
-                c.z = self.bbox.vmax.z
-        d = np.linalg.norm((c - obj.center_v).to_numpy(), ord=2)
+                c[2] = self.bbox.vmax.z
+        d = np.linalg.norm((c - obj.center).to_numpy(), ord=2)
         # sphere
         if obj_id == 0:
             print(f'distance={d}\tradius={obj.r}')
             test = d < obj.r
         return c, test
+        
 def center_of_gravity(pts):
     v = vector3.Vector3(0,0,0)
     for v_ele in pts:
@@ -95,4 +92,11 @@ def center_of_gravity(pts):
 def err_vector(v1, v2, size):
     return np.sum(np.square(v2-v1))/(size)
 
-
+def normalize(n: vector3.Vector3):
+    n = n.to_numpy()
+    mag = np.linalg.norm(n)
+    n_dot_n = mag**2.0
+    if np.abs(n_dot_n - 1.0) > 0.01:
+        for i in range(n.size):
+            n[i] = n[i]/mag
+    return vector3.Vector3(*n)

@@ -12,6 +12,8 @@ class Vector3():
         self.y=y
         self.z=z
         self._type = Vector3
+        self.index = 0
+        self.data = [x,y,z]
     def get(self):
         return self
     def set(self, vector3):
@@ -23,12 +25,21 @@ class Vector3():
     def zero(self):
         for attr, _ in self.__dict__.items():
             self.__dict__[attr]=0
+    def __iter__(self):
+        return self
+        return (self.x, self.y, self.z)
+    def __next__(self):
+        if self.index < len(self.data):
+            r = self.data[self.index]
+            self.index += 1
+            return r
+        else:
+            raise StopIteration()
     def __mul__(self, value):
         if isinstance(value, numbers.Number):
             return Vector3(self.x * value, self.y * value, self.z * value)
         if isinstance(value, Vector3):
             # dot product
-            print("dot product")
             return self.x * value.x + self.y * value.y + self.z * value.z
         raise TypeError("Vector3 or scalar are permitted")
     def __rmul__(self, val):
@@ -55,6 +66,7 @@ class Vector3():
         except ZeroDivisionError as e:
             print("Divide by Zero Error")
     def __eq__(self, vector3) -> bool:
+            # must be an argument paramters passed a v3 component
         return all([value == vector3.__dict__[attr] for attr,value in self.__dict__.items()] )
     def normalize(self) :
         mag_sq = self.x**2.0 + self.y**2.0 + self.z**2.0
@@ -75,10 +87,16 @@ class Vector3():
         self.y = value
     def set_z(self, value: np.float32):
         self.z = value
-    def rand(self, k=1):
-        self.x = np.random.random()*k
-        self.y = np.random.random()*k
-        self.z = np.random.random()*k
+    def rand(self, k=1, **kwargs):
+        if 'rng' in kwargs:
+            rng = kwargs['rng']
+            self.x = rng.random()*k
+            self.y = rng.random()*k
+            self.z  = rng.random()*k
+        else:
+            self.x = np.random.random()*k
+            self.y = np.random.random()*k
+            self.z = np.random.random()*k
     def copy(self):
         return Vector3(self.x, self.y, self.z)
 # NonMember Functions

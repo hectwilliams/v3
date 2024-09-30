@@ -51,6 +51,7 @@ class AABB():
         for i in range(self.box_vertices.size):
             self.box_vertices[i] = matrix_4x3.vector_mult(self.box_vertices[i], m)
     def box(self, ax):
+        self.remove_box()
         """draw bounding box"""
         for i in range(len(LINE_MAP)):
             i_a = LINE_MAP[i][0]
@@ -107,8 +108,6 @@ class AABB():
         self.acquire(data[2], 2)
         set_vertices(self.vmin, self.vmax, self.box_vertices) # 8 points required for bbox 
         self.box(ax)
-    def intersection_to_obj(self, obj):
-        pass
 def set_vertices(vmin, vmax, vertcies):
     """ using vmax and vmax vector assign 8 points for bounding box"""
     #0

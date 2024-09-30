@@ -263,7 +263,7 @@ class Matrix4x3():
         """
             setup matrix to perform a reflection about a arbritrary axis
         """
-        assert(abs(n*n -1.0) < 0.01)
+        # assert(abs(n*n -1.0) < 0.0001)
         self.m11 = 1.0- 2.0*n.x*n.x 
         self.m12 = -2.0*n.x*n.y
         self.m13 = -2.0*n.x*n.y
