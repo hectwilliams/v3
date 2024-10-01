@@ -3,7 +3,10 @@ import vector3
 import matrix_4x3
 import numpy as np 
 import aabb3
-import time
+from triangle_stuff.tessellates import Tessellates
+import threading
+import matplotlib.pyplot as plt 
+
 class Objectv3():
     def __init__(self, center= np.zeros(shape=(3)), axes = None) -> None:
         self.pts = np.array([vector3.Vector3(0, 0,0)  for _ in range( 3 ) ])
@@ -11,6 +14,8 @@ class Objectv3():
         self.axes_pad = None 
         self.bbox = aabb3.AABB()
         self.center = center
+        self.tesslte = Tessellates
+
     def add_collection(self, vertices):
         number_of_vertices = len(vertices)
         self.pts = np.array([vector3.Vector3  for _ in range( len(number_of_vertices)) ])
@@ -25,7 +30,7 @@ class Objectv3():
         self.axes = ax
     def show(self, ax, kwags = {} ):
         self.axes = ax
-        self.axes_pad = ax.scatter(*np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], self.pts ))).T, s=0.5, **kwags)
+        self.axes_pad = ax.scatter(*np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], self.pts ))).T, alpha = 0.3, s=0.5, **kwags)
         self.bbox.update_box(self.pts, self.axes)
     def unshow(self):
         if self.axes_pad:
@@ -74,7 +79,52 @@ class Objectv3():
             print(f'distance={d}\tradius={obj.r}')
             test = d < obj.r
         return c, test
+    
+    def tessellate(self):
+        searchable_nets_per_parent = self.pts.size - 1 if (self.pts.size - 1 ) < 6 else 6 
+        lock = threading.Lock()
+        self.tesslte = Tessellates(mode='load', num_nodes =self.pts.size , axes=self.axes,  is_tessellate=True)
+        threads = [ 
+        threading.Thread( target=thr_triangle,  args=( self.pts[i], self.pts, list(range(0, i)) + list(range(i + 1, self.pts.size)),  [[np.finfo(np.float64).max, vector3.Vector3] for _ in range(searchable_nets_per_parent)]  ,searchable_nets_per_parent,  self.tesslte , self.axes, lock) )  # map
+            for i in range(self.pts.size)
+        ]
+        for thr in threads:
+            thr.start()
+        for thr in threads:
+            thr.join()
+        # self.tesslte.sweep()
         
+def sweep(object, ax):
+    index = 0
+    
+    for pt in object.pts:
+        pad = ax.scatter(*pt.to_numpy(), color = 'black')
+        ax.set_title(f'{pt.to_numpy().round(2)}   {index}')
+        index += 1
+        plt.pause(4)
+        pad.remove()
+
+def distance_test(map, distance, nets, v ):
+    for net in range(nets):
+        if map[net][0] > distance:
+            for k in np.arange(nets-net-1, 0, step=-1 ):
+                map[k][0] = map[k-1][0]
+                map[k][1] = map[k-1][1]
+            map[net][0] = distance
+            map[net][1] = v
+            break
+
+def thr_triangle(main_pt, other_pts,indices, distance_vector_map , nets, tesse, axes, lock) :
+    for i_sub in indices:
+            child_pt = other_pts[i_sub]
+            d =  np.linalg.norm((main_pt.to_numpy() - child_pt.to_numpy()  ))
+            distance_test( distance_vector_map, d, nets, child_pt )
+    with lock:
+        v1 = main_pt
+        v2 = distance_vector_map[3][1]
+        v3 = distance_vector_map[5][1]
+        tesse.add_node(v1,v2,v3, axes )
+
 def center_of_gravity(pts):
     v = vector3.Vector3(0,0,0)
     for v_ele in pts:

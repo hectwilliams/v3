@@ -5,6 +5,7 @@ import vector3
 import matplotlib.pyplot as plt 
 import matplotlib
 import matrix_4x3
+from  mpl_toolkits.mplot3d.art3d import Line3D, Line3DCollection
 
 LINE_MAP = [ [0,1], [1,3], [2,3], [0,2],[0,4], [4,6], [2,6], [4,5],[6,7],[5,7],[1,5],[5,7],[3,7],[1,3]]
 class AABB():
@@ -18,6 +19,11 @@ class AABB():
         self.vsize = np.zeros((3))
         self.center = np.zeros((3))
         self.is_on = False
+        self.faces = {
+            'xz': {'ymin': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }, 'ymax': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }  },
+            'xy': {'zmin': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }, 'zmax': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }  },
+            'yz': {'xmin': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }, 'xmax': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }  },
+        }
     def empty(self)-> None:
         big_number = np.finfo(np.float16).max
         self.vmax.x = self.vmax.y = self.vmax.z = -big_number
@@ -66,48 +72,115 @@ class AABB():
                 for l in self.plot_buffer[i]:
                     l.remove() 
         self.is_on = False
-    def rotate(self, m, ax):
-        pass
-        # v_matrix = np.array(list(map(lambda v: [v.x, v.y, v.z], self.box_vertices)))
+    def toggle_touch_points(self, ax):
+        for plane ,a ,b  in [  ('xz', 'ymin' , 'ymax'), ('xy', 'zmin' , 'zmax') , ('yz', 'xmin' , 'xmax') ]:
+            for side in [a,b]:
+                c = self.faces[plane][side]['center']
+                n = self.faces[plane][side]['n']
+                plt_status = self.faces[plane][side]['plot'] 
+                # print(plt_status, c, n)
+                if not isinstance(plt_status, Line3DCollection):
+                    self.faces[plane][side]['plot'] =   ax.quiver(*c, *n, linewidth = 1, arrow_length_ratio=0.1 )  
+                    # = ax.plot(*zip(c.to_numpy(), n))
+                else:
+                    self.faces[plane][side]['plot'].remove()
+                    # for line in self.faces[plane][side]['plot']:
+                        # line.remove()
 
-        # # compute xmin_new, xmax_new (use original bounding box limits to find new bound for x coordinate after transformation )
-        # x_min = x_max= m[3][0]
-        # x_min +=  (self.vmin.x if m[:,0][0] > 0  else self.vmax.x) * m[:,0][0]
-        # x_max +=  (self.vmax.x if m[:,0][0] > 0  else self.vmin.x) * m[:,0][0]
-        # x_min += (self.vmin.y if m[:,0][1] > 0  else self.vmax.y) * m[:,0][1]
-        # x_max += (self.vmax.y if m[:,0][1] > 0  else self.vmin.y) * m[:,0][1]
-        # x_min += (self.vmin.z if m[:,0][2] > 0  else self.vmax.z) * m[:,0][2]
-        # x_max += (self.vmax.z if m[:,0][2] > 0  else self.vmin.z) * m[:,0][2]
-        # y_min = y_max= m[3][1]
-        # y_min +=  (self.vmin.x if m[:,1][0] > 0  else self.vmax.x) * m[:,1][0]
-        # y_max +=  (self.vmax.x if m[:,1][0] > 0  else self.vmin.x) * m[:,1][0]
-        # y_min += (self.vmin.y if m[:,1][1] > 0  else self.vmax.y) * m[:,1][1]
-        # y_max += (self.vmax.y if m[:,1][1] > 0  else self.vmin.y) * m[:,1][1]
-        # y_min += (self.vmin.z if m[:,1][2] > 0  else self.vmax.z) * m[:,1][2]
-        # y_max += (self.vmax.z if m[:,1][2] > 0  else self.vmin.z) * m[:,1][2]
-        # z_min = z_max= m[3][2]
-        # z_min +=  (self.vmin.x if m[:,2][0] > 0  else self.vmax.x) * m[:,2][0]
-        # z_max +=  (self.vmax.x if m[:,2][0] > 0  else self.vmin.x) * m[:,2][0]
-        # z_min += (self.vmin.y if m[:,2][1] > 0  else self.vmax.y) * m[:,2][1]
-        # z_max += (self.vmax.y if m[:,2][1] > 0  else self.vmin.y) * m[:,2][1]
-        # z_min += (self.vmin.z if m[:,2][2] > 0  else self.vmax.z) * m[:,2][2]
-        # z_max += (self.vmax.z if m[:,2][2] > 0  else self.vmin.z) * m[:,2][2]
-        # self.vmax.x = x_max
-        # self.vmax.y = y_max
-        # self.vmax.z = z_max
-        
-        # self.vmin.x = x_min
-        # self.vmin.y = y_min
-        # self.vmin.z = z_min
-        # self.box(ax)
     def update_box(self, pts, ax) ->None:
         self.empty()
         data = np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], pts ))).T
         self.acquire(data[0], 0)
         self.acquire(data[1], 1)
         self.acquire(data[2], 2)
-        set_vertices(self.vmin, self.vmax, self.box_vertices) # 8 points required for bbox 
+        set_vertices(self.vmin, self.vmax, self.box_vertices) # 8 points required for bbox toggle_touch_points
         self.box(ax)
+        face_normals(self.vmin, self.vmax, self.faces, ax)
+
+def face_normals(vmin, vmax, faces, ax):
+    # xz - ymin
+    v1 = vector3.Vector3(vmin.x, vmin.y, vmin.z)
+    v2 = vector3.Vector3(vmin.x, vmin.y, vmax.z)
+    v3 = vector3.Vector3(vmax.x, vmin.y, vmax.z)
+    v4 = vector3.Vector3(vmax.x, vmin.y, vmin.z)
+    e2 = v2 - v1 
+    e1 = v3 - v1 
+    e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
+    n = e2xe1 / np.linalg.norm(e2xe1)
+    center = (v1 + v2 + v3 + v4) / 4
+    faces['xz']['ymin']['center'] =  center
+    faces['xz']['ymin']['n'] =  n
+    # ax.plot(*zip(center.to_numpy(), n))
+    # ax.scatter(*n, s=5, color='red')
+    
+    # xz - ymax
+    v1 = vector3.Vector3(vmin.x, vmax.y, vmin.z)
+    v2 = vector3.Vector3(vmin.x, vmax.y, vmax.z)
+    v3 = vector3.Vector3(vmax.x, vmax.y, vmax.z)
+    v4 = vector3.Vector3(vmax.x, vmax.y, vmin.z)
+
+    e2 = v2 - v3 
+    e1 = v1 - v2 
+    e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
+    n = e2xe1 / np.linalg.norm(e2xe1)
+    center = (v1 + v2 + v3 + v4) / 4
+    faces['xz']['ymax']['center'] =  center
+    faces['xz']['ymax']['n'] =  n
+
+    # xy - ymin
+    v1 = vector3.Vector3(vmin.x, vmin.y, vmin.z)
+    v2 = vector3.Vector3(vmin.x, vmax.y, vmin.z)
+    v3 = vector3.Vector3(vmax.x, vmax.y, vmin.z)
+    v4 = vector3.Vector3(vmax.x, vmin.y, vmin.z)
+    e2 = v2 - v3
+    e1 = v1 - v2
+    e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
+    n = e2xe1 / np.linalg.norm(e2xe1)
+    center = (v1 + v2 + v3 + v4) / 4
+    faces['xy']['zmin']['center'] =  center
+    faces['xy']['zmin']['n'] =  n
+    
+    # xy - ymax
+    v1 = vector3.Vector3(vmin.x, vmin.y, vmax.z)
+    v2 = vector3.Vector3(vmin.x, vmax.y, vmax.z)
+    v3 = vector3.Vector3(vmax.x, vmax.y, vmax.z)
+    v4 = vector3.Vector3(vmax.x, vmin.y, vmax.z)
+    e2 = v2 - v1
+    e1 = v3 - v2
+    e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
+    n = e2xe1 / np.linalg.norm(e2xe1)
+    center = (v1 + v2 + v3 + v4) / 4
+    faces['xy']['zmax']['center'] =  center
+    faces['xy']['zmax']['n'] =  n
+
+    # yz - xmax
+    v1 = vector3.Vector3(vmax.x, vmin.y, vmin.z)
+    v2 = vector3.Vector3(vmax.x, vmin.y, vmax.z)
+    v3 = vector3.Vector3(vmax.x, vmax.y, vmax.z)
+    v4 = vector3.Vector3(vmax.x, vmax.y, vmin.z)
+    e2 = v2 - v1
+    e1 = v3 - v2
+    e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
+    n = e2xe1 / np.linalg.norm(e2xe1)
+    center = (v1 + v2 + v3 + v4) / 4
+    faces['yz']['xmax']['center'] =  center
+    faces['yz']['xmax']['n'] =  n
+
+    # yz - xmin
+    v4 = vector3.Vector3(vmin.x, vmin.y, vmin.z)
+    v3 = vector3.Vector3(vmin.x, vmin.y, vmax.z)
+    v2 = vector3.Vector3(vmin.x, vmax.y, vmax.z)
+    v1 = vector3.Vector3(vmin.x, vmax.y, vmin.z)
+    e2 = v2 - v1
+    e1 = v3 - v2
+    e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
+    n = e2xe1 / np.linalg.norm(e2xe1)
+    center = (v1 + v2 + v3 + v4) / 4
+    faces['yz']['xmin']['center'] =  center
+    faces['yz']['xmin']['n'] =  n 
+    # ax.plot(*zip(center.to_numpy(), n))
+    # ax.scatter(*n, s=5, color='red')
+
 def set_vertices(vmin, vmax, vertcies):
     """ using vmax and vmax vector assign 8 points for bounding box"""
     #0

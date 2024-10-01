@@ -439,5 +439,6 @@ def range_interesect_two_ray(p1, p2, d1, d2, id):
         elif id == 2:
             return np.cross(p_delta, d1).dot(d1_x_d2) / (d1_x_d2_mag_sq)
     return cal_range_id(id)
+
 if __name__ == '__main__':
     intersection_sphere_and_plane()

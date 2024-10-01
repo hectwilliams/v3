@@ -10,11 +10,10 @@ import quarternion
 import matrix_4x3
 import matplotlib
 from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
-from matplotlib.patches import ArrowStyle
 
 class Triangle(objectv3.Objectv3):
     def __init__(self, v1: vector3.Vector3 = {}, v2: vector3.Vector3 = {}, v3: vector3.Vector3 ={}, axes = None, **kwargs ) -> None:
-        super().__init__(n=3, axes = axes)
+        super().__init__( axes = axes)
         # self.is_visible = False
         self.show_vertex_name = False 
         self.show_lengths = False 
@@ -85,6 +84,7 @@ class Triangle(objectv3.Objectv3):
         if self.is_tessellate:
             self.show(axes, 'lines')
             self.show(axes, 'vertex_node')
+
         else:
             self.show(axes, 'lines')
             self.show(axes, 'vertex_node')
@@ -95,11 +95,11 @@ class Triangle(objectv3.Objectv3):
     def highlight(self, seconds = 1.0):
         lines = list(map( lambda x: x[0],  self.plot_data[4]))
         prev_lines_info = list(map(lambda ele: [ele.get_color(), ele.get_alpha()] ,    lines ))
-        print(prev_lines_info)
+        # print(prev_lines_info)
         self.update_line(color='green', alpha=1)
         
         if isinstance(seconds,float ):
-            print('lol')
+            # print('lol')
             plt.pause(seconds)
             time.sleep(seconds)
             self.update_line(color=prev_lines_info[0][0] , alpha=prev_lines_info[0][1] )

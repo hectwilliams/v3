@@ -1,5 +1,4 @@
 """create tessellate plane using Triangle class"""
-import objectv3
 import matplotlib.pyplot as plt 
 import matplotlib
 import matplotlib.axes
@@ -7,52 +6,59 @@ import triangle
 import numpy as np 
 import vector3
 from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
-import time
-import matrix_4x3
-import quarternion
-import threading
-import circle_stuff.circle
 import tick
-class Tessellates():
-        
-    def __init__(self,  axes: matplotlib.axes.Axes , triangle_per_cell = 1, layers = 1 ,  **kwargs):
-        if triangle_per_cell <= 0:
-            raise ValueError('Each cell requires at least one triangle')
-        if layers < 0:
-            raise ValueError('layers must be greater than 0, 0th layer is the origin')
-        self.axes= axes
-        self.rng =  np.random.Generator(np.random.PCG64(42)) if 'rng' not in kwargs else kwargs['rng']
-        self.counter = tick.Tick()
-        triangles_in_layer = lambda l: np.sum( np.array([-1, 0, 0, 1]) + 2.0 * np.float16(l) ).astype(dtype=np.int16)
-        self.nodes = np.array([triangle for _ in range( triangle_per_cell* (1  + layers*triangles_in_layer(layers)  ) )]   )
 
-        if triangle_per_cell == 1:
-            v1,v2,v3,v4 = triangle.isosceles_triangle()
-            self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2,v3 ,axes=ax) 
-            self.nodes[0].show(axes, 'vertex_name')
-            self.mesh( self.nodes[0], layers)
-        elif triangle_per_cell == 2:
-            v1,v2,v3,v4 = triangle.obtuse_triangle(115)
-            self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2,v3 ,axes=ax) 
-            self.nodes[self.counter.tick()] = triangle.Triangle(v2, v4, v3 ,axes=ax) 
-            self.mesh( self.nodes[0], layers)
-            self.mesh( self.nodes[1], layers)
-        elif triangle_per_cell == 4:
-            v1,v2,v3,v4 = triangle.obtuse_triangle(115)
-            v_origin = (v1 + v2 + v3 + v4) / 4
-            self.nodes[self.counter.tick()] = triangle.Triangle(v1,v_origin,v3 ,axes=ax) 
-            self.nodes[self.counter.tick()] = triangle.Triangle(v2, v_origin, v1 ,axes=ax) 
-            self.nodes[self.counter.tick()] = triangle.Triangle(v2, v4, v_origin ,axes=ax) 
-            self.nodes[self.counter.tick()] = triangle.Triangle(v_origin, v4, v3 ,axes=ax) 
-            self.mesh( self.nodes[0], layers)
-            self.mesh( self.nodes[1], layers)
-            self.mesh( self.nodes[2], layers)
-            self.mesh( self.nodes[3], layers)
-        
-    def mesh(self, parent, layers):
+class Tessellates():
+    def __init__(self,  axes: matplotlib.axes.Axes , triangle_per_cell = 1, layers = 1 , mode = 'load', num_nodes = 0, **kwargs):
+        self.counter = tick.Tick()
+        self.axes= axes
+
+        if mode == 'test':
+            if triangle_per_cell <= 0:
+                raise ValueError('Each cell requires at least one triangle')
+            if layers < 0:
+                raise ValueError('layers must be greater than 0, 0th layer is the origin')
+            self.rng =  np.random.Generator(np.random.PCG64(42)) if 'rng' not in kwargs else kwargs['rng']
+            triangles_in_layer = lambda l: np.sum( np.array([-1, 0, 0, 1]) + 2.0 * np.float16(l) ).astype(dtype=np.int16)
+            self.nodes = np.array([triangle for _ in range( triangle_per_cell* (1  + layers*triangles_in_layer(layers)  ) )]   )
+            if triangle_per_cell == 1:
+                v1,v2,v3,v4 = triangle.isosceles_triangle()
+                self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2,v3 ,axes=ax) 
+                self.nodes[0].show(axes, 'vertex_name')
+                self.mesh( self.nodes[0], layers)
+            elif triangle_per_cell == 2:
+                v1,v2,v3,v4 = triangle.obtuse_triangle(115)
+                self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2,v3 ,axes=ax) 
+                self.nodes[self.counter.tick()] = triangle.Triangle(v2, v4, v3 ,axes=ax) 
+                self.mesh( self.nodes[0], layers)
+                self.mesh( self.nodes[1], layers)
+            elif triangle_per_cell == 4:
+                v1,v2,v3,v4 = triangle.obtuse_triangle(115)
+                v_origin = (v1 + v2 + v3 + v4) / 4
+                self.nodes[self.counter.tick()] = triangle.Triangle(v1,v_origin,v3 ,axes=ax) 
+                self.nodes[self.counter.tick()] = triangle.Triangle(v2, v_origin, v1 ,axes=ax) 
+                self.nodes[self.counter.tick()] = triangle.Triangle(v2, v4, v_origin ,axes=ax) 
+                self.nodes[self.counter.tick()] = triangle.Triangle(v_origin, v4, v3 ,axes=ax) 
+                self.mesh( self.nodes[0], layers)
+                self.mesh( self.nodes[1], layers)
+                self.mesh( self.nodes[2], layers)
+                self.mesh( self.nodes[3], layers)
+        if mode == 'load':
+            self.rng =  np.random.Generator(np.random.PCG64(42)) if 'rng' not in kwargs else kwargs['rng']
+            self.nodes = np.array([triangle.Triangle for _ in range( num_nodes )]   )
+    
+    def add_node(self, v1,v2,v3, axes):
+        self.nodes[self.counter.tick()] = triangle.Triangle(v1,v2, v3 ,axes=axes)
+    def hide(self):
+        for node in self.nodes:
+            node.unshow(mode='lines')
+    def reveal(self):
+        for node in self.nodes:
+            node.uhow(mode='lines', ax=self.axes)
+    def create_mesh(self, parent, layers):
+        """used only in test gen mode"""
         if layers <= 0:
             raise ValueError('layer > 0 is required')
-
         # compute path 0
         for layer in range(1, layers + 1):
             for dir in [-1, 1]:
@@ -69,7 +75,6 @@ class Tessellates():
                     v2_ = v2 - j*parent.e21
                     v3_ = v3 - j*parent.e21
                     self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1_),vector3.Vector3(*v2_),vector3.Vector3(*v3_) ,axes=ax) 
-
             # # compute path 1
             for dir in [-1, 1]:
                 v1 = parent.v1.to_numpy() + layer*dir*parent.e21
@@ -86,12 +91,11 @@ class Tessellates():
                     v3_ = v3 - j*parent.e31
                     self.nodes[self.counter.tick()] = triangle.Triangle(vector3.Vector3(*v1_),vector3.Vector3(*v2_),vector3.Vector3(*v3_) ,axes=ax) 
 
-    def sweep(self):
+    def sweep(self,):
         for tri in self.nodes:
             lines = list(map( lambda x: x[0],  tri.get_lines() ))
             prev_lines_info = list(map(lambda ele: [ele.get_color(), ele.get_alpha()] ,    lines ))
-            # print(prev_lines_info)
-            tri.update_line(color='green', alpha=1)
+            tri.update_line(color='red', alpha=1)
             plt.pause(0.01)
             tri.update_line(color=prev_lines_info[0][0] , alpha=prev_lines_info[0][1] )
 
@@ -167,14 +171,5 @@ if __name__ == '__main__':
     ax.set_ylim(*widths)
     ax.set_zlim(*widths)
     ax.view_init(30, -50, 0)
-    # tri = triangle.Triangle(create_rand_triange=True ,axes=ax) # master triangle
-    # coord = tri.barycentric_to_coord(0, 0, 1)
-    # ax.scatter(*coord.to_numpy())
-    # ax.scatter(*v.to_numpy(), c='pink', alpha=0.2)
-    # b = tri.coord_to_barycentric(coord)
-    # coord = tri.barycentric_to_coord(*b)
-    # v = tri.barycentric_to_coord(*b)
-    # ax.scatter(*coord.to_numpy())
-    tessellate = Tessellates(axes = ax, triangle_per_cell = 2, layers=1, rng=rng)
-    print(tessellate.nodes)
+    tessellate = Tessellates(axes = ax, triangle_per_cell = 2, layers=1, rng=rng, mode='test')
     plt.show()

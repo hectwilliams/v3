@@ -49,4 +49,3 @@ if __name__ == '__main__':
     circle = Circle()
     circle.show(ax)
     plt.show()
-    # circle2d()
