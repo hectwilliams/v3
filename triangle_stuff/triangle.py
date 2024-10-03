@@ -1,7 +1,5 @@
 """
     export PYTHONPATH="/Users/hectwilliams/Dev/v3:$PYTHONPATH"
-    export PYTHONPATH="/Users/hectorwilliams/Dev/v3/plane_stuff:$PYTHONPATH"
-
 """
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -111,7 +109,7 @@ class Triangle(Objectv3):
                 if 'alpha' in kwargs:
                     line.set_alpha(kwargs['alpha']) 
 
-    def show(self, ax, mode = 'all'):
+    def show(self, ax, mode = 'lines'):
 
         if mode == 'all' or mode == 'normal':
             if not self.show_normal:
