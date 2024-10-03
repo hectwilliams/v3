@@ -1,13 +1,9 @@
 import vector3
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
 import time 
 import circle_stuff.circle
 import plane_stuff.plane
-import matrix_4x3
-import quarternion
-
 def closest_point_on_line():
     """ project point to closest distance on line (another point)"""
     N = 500
@@ -326,6 +322,29 @@ def cloeset_point_to_aabb():
         tmp.remove()
         circle2.unshow()
     plt.show() 
+
+def intersection_bbox_ray_plane(c, some_plane):
+    data = []
+    for plane ,a ,b  in [  ('xz', 'ymin' , 'ymax'), ('xy', 'zmin' , 'zmax') , ('yz', 'xmin' , 'xmax') ]:
+        for side in [a,b]:
+            p0 = c.bbox.faces[plane][side]['center'] # vector
+            p0_dir = c.bbox.faces[plane][side]['n']   # numpy ( unormalized)
+            
+            p0 = p0.to_numpy()
+            po_dot_n = p0.dot(some_plane.n_unorm)
+            
+            d_dot_n = p0_dir.dot(some_plane.n_unorm)
+            if d_dot_n == 0:
+                break
+            t = (some_plane.d - po_dot_n) / d_dot_n
+            if d_dot_n < 0 :
+                p0_ray = p0 + t*p0_dir
+                xz_bound_test = (plane == 'xz') and (p0_ray[0] <= some_plane.bbox.vmax.x and p0_ray[0] >= some_plane.bbox.vmin.x) and (p0_ray[2] <= some_plane.bbox.vmax.z and p0_ray[2] >= some_plane.bbox.vmin.z)
+                xy_bound_test = (plane == 'xy') and (p0_ray[0] <= some_plane.bbox.vmax.x and p0_ray[0] >= some_plane.bbox.vmin.x) and (p0_ray[1] <= some_plane.bbox.vmax.y and p0_ray[1] >= some_plane.bbox.vmin.y)
+                yz_bound_test = (plane == 'yz') and (p0_ray[1] <= some_plane.bbox.vmax.y and p0_ray[1] >= some_plane.bbox.vmin.y) and (p0_ray[2] <= some_plane.bbox.vmax.z and p0_ray[2] >= some_plane.bbox.vmin.z)
+                if xz_bound_test or xy_bound_test or yz_bound_test:    
+                    data.append(p0_ray)
+    return data
 def interesection_ray_and_plane():
     global ax
     global rng

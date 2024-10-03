@@ -1,20 +1,19 @@
 """
     export PYTHONPATH="/Users/hectwilliams/Dev/v3:$PYTHONPATH"
+    export PYTHONPATH="/Users/hectorwilliams/Dev/v3/plane_stuff:$PYTHONPATH"
+
 """
 import numpy as np
 import matplotlib.pyplot as plt 
 import vector3
-import objectv3
 import time 
-import quarternion
-import matrix_4x3
-import matplotlib
 from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
-
-class Triangle(objectv3.Objectv3):
-    def __init__(self, v1: vector3.Vector3 = {}, v2: vector3.Vector3 = {}, v3: vector3.Vector3 ={}, axes = None, **kwargs ) -> None:
+from objectv3 import Objectv3
+import tick
+import threading
+class Triangle(Objectv3):
+    def __init__(self, v1: vector3.Vector3 , v2: vector3.Vector3 = None, v3: vector3.Vector3 = None, axes = None, **kwargs ) -> None:
         super().__init__( axes = axes)
-        # self.is_visible = False
         self.show_vertex_name = False 
         self.show_lengths = False 
         self.show_normal= False
@@ -22,11 +21,8 @@ class Triangle(objectv3.Objectv3):
         self.show_lines = False
         self.is_tessellate = False if 'is_tessellate' not in kwargs  else kwargs['is_tessellate']
         self.rng =  np.random.Generator(np.random.PCG64(42)) if 'rng' not in kwargs else kwargs['rng']
-        # if create_rand_triange:
-        #     self.pts[0] = vector3.Vector3(*self.rng.random(size=(3)))
-        #     self.pts[1] = vector3.Vector3(*self.rng.random(size=(3)))
-        #     self.pts[2] = vector3.Vector3(*self.rng.random(size=(3)))
-        # else:        
+        # self.tesslte = triangle_stuff.tessellate.Tessellates
+
         self.v1 = v1
         self.v2 = v2
         self.v3 = v3
@@ -197,7 +193,7 @@ class Triangle(objectv3.Objectv3):
                     for line in lines:
                         line.remove()
             self.show_lines = False
-
+    
     # hidden method
     def add_collection(self, **kwargs):
         pass
@@ -266,6 +262,23 @@ class Triangle(objectv3.Objectv3):
         # b2 = area_2 / area
         # b3 = area_3 / area
         # return np.array([b1, b2, b3])
+    ###
+    def tessellate(self):
+        searchable_nets_per_parent = self.pts.size - 1 if (self.pts.size - 1 ) < 6 else 6 
+        lock = threading.Lock()
+        # self.tesslte = triangle_stuff.tessellate.Tessellates(mode='load', num_nodes =self.pts.size , axes=self.axes,  is_tessellate=True)
+        # threads = [ 
+        # threading.Thread( target=thr_triangle,  args=( self.pts[i], self.pts, list(range(0, i)) + list(range(i + 1, self.pts.size)),  [[np.finfo(np.float64).max, vector3.Vector3] for _ in range(searchable_nets_per_parent)]  ,searchable_nets_per_parent,  self.tesslte , self.axes, lock) )  # map
+        #     for i in range(self.pts.size)
+        # ]
+        # for thr in threads:
+        #     thr.start()
+        # for thr in threads:
+        #     thr.join()
+        # self.tesslte.sweep()
+
+
+
 
 def barycentric_to_coord(parent, b1, b2, b3) -> vector3.Vector3:
         if (b1 + b2 + b3) - 1 > 0.001:

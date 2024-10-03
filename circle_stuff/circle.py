@@ -1,15 +1,19 @@
-import sys, os 
-import matplotlib.axes
 import numpy as np
 import vector3  
 import matplotlib.pyplot as plt 
 import matplotlib
-import objectv3
 import matrix_4x3
+from objectv3 import Objectv3
 
-class Circle(objectv3.Objectv3):
-    def __init__(self, radius: np.float16 = 1.0, n: np.int32 = 50, center: np.ndarray = np.array([0.0,0.0,0.0],dtype=np.float32), axes: matplotlib.axes.Axes = None, **kwargs):
+class Circle(Objectv3):
+    def __init__(self,axes, radius: np.float16 = 1.0, n: np.int32 = 50, center: np.ndarray = np.array([0.0,0.0,0.0],dtype=np.float32), **kwargs):
         super().__init__(center, axes)
+
+        widths = (-10,10)
+        axes.set_xlim(*widths)
+        axes.set_ylim(*widths)
+        axes.set_zlim(*widths)
+
         self.r = radius
         radius_sq = np.square(radius)
         m = matrix_4x3.Matrix4x3()

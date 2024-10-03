@@ -1,15 +1,64 @@
 """create tessellate plane using Triangle class"""
+from  triangle_stuff import triangle
 import matplotlib.pyplot as plt 
-import matplotlib
-import matplotlib.axes
-import triangle
 import numpy as np 
 import vector3
-from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
 import tick
+import sys 
+import threading 
+from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
+
+
+
+def run(self):
+    searchable_nets_per_parent = self.pts.size - 1 if (self.pts.size - 1 ) < 6 else 6 
+    lock = threading.Lock()
+    tesslte = Tessellates(mode='load', num_nodes =self.pts.size , axes=self.axes,  is_tessellate=True)
+    threads = [ 
+    threading.Thread( target=thr_triangle,  args=( self.pts[i], self.pts, list(range(0, i)) + list(range(i + 1, self.pts.size)),  [[np.finfo(np.float64).max, vector3.Vector3] for _ in range(searchable_nets_per_parent)]  ,searchable_nets_per_parent,  tesslte , self.axes, lock) )  # map
+        for i in range(self.pts.size)
+    ]
+    for thr in threads:
+        thr.start()
+    for thr in threads:
+        thr.join()
+    # self.tesslte.sweep()
+    return tesslte
+
+def sweep(object, ax):
+    index = 0
+    
+    for pt in object.pts:
+        pad = ax.scatter(*pt.to_numpy(), color = 'black')
+        ax.set_title(f'{pt.to_numpy().round(2)}   {index}')
+        index += 1
+        plt.pause(4)
+        pad.remove()
+
+def distance_test(map, distance, nets, v ):
+    for net in range(nets):
+        if map[net][0] > distance:
+            for k in np.arange(nets-net-1, 0, step=-1 ):
+                map[k][0] = map[k-1][0]
+                map[k][1] = map[k-1][1]
+            map[net][0] = distance
+            map[net][1] = v
+            break
+
+def thr_triangle(main_pt, other_pts,indices, distance_vector_map , nets, tesse, axes, lock) :
+    for i_sub in indices:
+            child_pt = other_pts[i_sub]
+            d =  np.linalg.norm((main_pt.to_numpy() - child_pt.to_numpy()  ))
+            distance_test( distance_vector_map, d, nets, child_pt )
+    with lock:
+        v1 = main_pt
+        v2 = distance_vector_map[3][1]
+        v3 = distance_vector_map[5][1]
+        tesse.add_node(v1,v2,v3, axes )
+
 
 class Tessellates():
-    def __init__(self,  axes: matplotlib.axes.Axes , triangle_per_cell = 1, layers = 1 , mode = 'load', num_nodes = 0, **kwargs):
+    def __init__(self,  axes, triangle_per_cell = 1, layers = 1 , mode = 'load', num_nodes = 0, **kwargs):
         self.counter = tick.Tick()
         self.axes= axes
 
@@ -54,7 +103,7 @@ class Tessellates():
             node.unshow(mode='lines')
     def reveal(self):
         for node in self.nodes:
-            node.uhow(mode='lines', ax=self.axes)
+            node.show(mode='lines', ax=self.axes)
     def create_mesh(self, parent, layers):
         """used only in test gen mode"""
         if layers <= 0:
@@ -157,6 +206,7 @@ class Tessellates():
         p = ray_origin + ray_delta * t
         # r y g  -->  draw intersect 
         ax.scatter(*p, color= ['red', 'yellow', 'green'][self.rng.integers(0,3)] , s=3)
+
 
 if __name__ == '__main__':
     rng = np.random.Generator(np.random.PCG64(21))

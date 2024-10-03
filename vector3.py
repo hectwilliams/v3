@@ -115,3 +115,4 @@ def distance(v1: Vector3, v2: Vector3):
     dy = v1.y - v2.y
     dz = v1.z - v2.z
     return sqrt(dx**2 + dy**2 + dz**2)
+zero_origin = Vector3()

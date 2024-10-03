@@ -24,6 +24,20 @@ class AABB():
             'xy': {'zmin': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }, 'zmax': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }  },
             'yz': {'xmin': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }, 'xmax': {'center': vector3.Vector3, 'n': vector3.Vector3, 'plot': plt.quiver }  },
         }
+        self.empty()
+    # def intersection_ray_plane(self, plane_normal: np.ndarray, pts_on_plane: vector3.Vector3):
+    #     for plane ,a ,b  in [  ('xz', 'ymin' , 'ymax'), ('xy', 'zmin' , 'zmax') , ('yz', 'xmin' , 'xmax') ]:
+    #         for side in [a,b]:
+    #             c = self.faces[plane][side]['center']
+    #             n = self.faces[plane][side]['n']
+                
+
+    #             d_norm = rng.random(size=(3)) #direction of po
+    #             po_dot_n = po.to_numpy().dot(normal)
+    #             d_dot_n = d_norm.dot(normal)
+    #             t = (d - po_dot_n) / d_dot_n
+    #             po_intersect = po.to_numpy() + t*d_norm
+                
     def empty(self)-> None:
         big_number = np.finfo(np.float16).max
         self.vmax.x = self.vmax.y = self.vmax.z = -big_number
@@ -73,6 +87,9 @@ class AABB():
                     l.remove() 
         self.is_on = False
     def toggle_touch_points(self, ax):
+        if self.is_empty():
+            return 
+        """center normals on each side of box"""
         for plane ,a ,b  in [  ('xz', 'ymin' , 'ymax'), ('xy', 'zmin' , 'zmax') , ('yz', 'xmin' , 'xmax') ]:
             for side in [a,b]:
                 c = self.faces[plane][side]['center']
@@ -86,7 +103,24 @@ class AABB():
                     self.faces[plane][side]['plot'].remove()
                     # for line in self.faces[plane][side]['plot']:
                         # line.remove()
+    def enable_touch_points(self, ax):
+        face_normals(self.vmin, self.vmax, self.faces, ax)
+        for plane ,a ,b  in [  ('xz', 'ymin' , 'ymax'), ('xy', 'zmin' , 'zmax') , ('yz', 'xmin' , 'xmax') ]:
+            for side in [a,b]:
+                c = self.faces[plane][side]['center']
+                n = self.faces[plane][side]['n']
+                self.faces[plane][side]['plot'] =   ax.quiver(*c, *n, linewidth = 1, arrow_length_ratio=0.1 )  
 
+    def remove_touch_points(self):
+        if self.is_empty():
+            return 
+        for plane ,a ,b  in [  ('xz', 'ymin' , 'ymax'), ('xy', 'zmin' , 'zmax') , ('yz', 'xmin' , 'xmax') ]:
+            for side in [a,b]:
+                ele = self.faces[plane][side]['plot']
+                if hasattr(ele, 'remove'):
+                    print(ele)
+                    ele.remove()                
+                    
     def update_box(self, pts, ax) ->None:
         self.empty()
         data = np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], pts ))).T
@@ -95,8 +129,6 @@ class AABB():
         self.acquire(data[2], 2)
         set_vertices(self.vmin, self.vmax, self.box_vertices) # 8 points required for bbox toggle_touch_points
         self.box(ax)
-        face_normals(self.vmin, self.vmax, self.faces, ax)
-
 def face_normals(vmin, vmax, faces, ax):
     # xz - ymin
     v1 = vector3.Vector3(vmin.x, vmin.y, vmin.z)
@@ -106,7 +138,7 @@ def face_normals(vmin, vmax, faces, ax):
     e2 = v2 - v1 
     e1 = v3 - v1 
     e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
-    n = e2xe1 / np.linalg.norm(e2xe1)
+    n = e2xe1 #/ np.linalg.norm(e2xe1)
     center = (v1 + v2 + v3 + v4) / 4
     faces['xz']['ymin']['center'] =  center
     faces['xz']['ymin']['n'] =  n
@@ -122,7 +154,7 @@ def face_normals(vmin, vmax, faces, ax):
     e2 = v2 - v3 
     e1 = v1 - v2 
     e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
-    n = e2xe1 / np.linalg.norm(e2xe1)
+    n = e2xe1 #/ np.linalg.norm(e2xe1)
     center = (v1 + v2 + v3 + v4) / 4
     faces['xz']['ymax']['center'] =  center
     faces['xz']['ymax']['n'] =  n
@@ -135,7 +167,7 @@ def face_normals(vmin, vmax, faces, ax):
     e2 = v2 - v3
     e1 = v1 - v2
     e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
-    n = e2xe1 / np.linalg.norm(e2xe1)
+    n = e2xe1 #/ np.linalg.norm(e2xe1)
     center = (v1 + v2 + v3 + v4) / 4
     faces['xy']['zmin']['center'] =  center
     faces['xy']['zmin']['n'] =  n
@@ -148,7 +180,7 @@ def face_normals(vmin, vmax, faces, ax):
     e2 = v2 - v1
     e1 = v3 - v2
     e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
-    n = e2xe1 / np.linalg.norm(e2xe1)
+    n = e2xe1 #/ np.linalg.norm(e2xe1)
     center = (v1 + v2 + v3 + v4) / 4
     faces['xy']['zmax']['center'] =  center
     faces['xy']['zmax']['n'] =  n
@@ -161,7 +193,7 @@ def face_normals(vmin, vmax, faces, ax):
     e2 = v2 - v1
     e1 = v3 - v2
     e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
-    n = e2xe1 / np.linalg.norm(e2xe1)
+    n = e2xe1 #/ np.linalg.norm(e2xe1)
     center = (v1 + v2 + v3 + v4) / 4
     faces['yz']['xmax']['center'] =  center
     faces['yz']['xmax']['n'] =  n
@@ -174,7 +206,7 @@ def face_normals(vmin, vmax, faces, ax):
     e2 = v2 - v1
     e1 = v3 - v2
     e2xe1 = np.cross(e1.to_numpy(), e2.to_numpy())
-    n = e2xe1 / np.linalg.norm(e2xe1)
+    n = e2xe1 #/ np.linalg.norm(e2xe1)
     center = (v1 + v2 + v3 + v4) / 4
     faces['yz']['xmin']['center'] =  center
     faces['yz']['xmin']['n'] =  n 
