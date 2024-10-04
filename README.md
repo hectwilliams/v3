@@ -2,21 +2,26 @@
 
 ## Cover Page
 * Salutation!
-![pic](media/cover_page.png)
+![cool gif](media/spin_anim.gif)
 
 ## Contents 
+* recently cleaning objects and directories, 
 
-* **Repo main directory consists of typical boilerplate files (e.g.README.md) and 3D development base modules/classes 
-    - aabb3 is module containing the bounded box AABB3 class 
-* ** triangle_stuff
+* Repo main directory consists of typical boilerplate files (e.g.README.md) and 3D development base modules/classes 
+    - aabb3 is module containing the bounded box AABB3 Class 
+    - polygon moduke contains Polygon Class
+
+* ~~triangle_stuff~~
     - Contains modules for creating triangle and tessellate structures . 
-* ** plane_stuff
+*  ~~plane_stuff~~
     - Contains module for creating plane structures
-* ** circle_stuff
+*  ~~circle_stuff~~
     - Contains module for creating circle structures 
-* ** test_stuff 
-    - Contains simulations of 3d space tasks (i.e. rotating circle about axis)
+*  ~~test_stuff ~~
+    - Contains simulations of 3d space tasks (i.e. rotating circle about axis) 
+## Object Tree (thus far)
+![object tree](media/objectTree.1.png)
 
 ## References
-- "3D Math Primer for Graphics and Game Development" 
+- "3D Math Primer for Graphics and Game Developmen t" 
 
