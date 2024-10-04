@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # from triangle_stuff import tessellates
 
 class Objectv3():
-    def __init__(self, center= np.zeros(shape=(3)), axes = None) -> None:
+    def __init__(self, center= np.zeros(shape=(3)), axes= any) -> None:
         self.pts = np.array([vector3.Vector3(0, 0,0)  for _ in range( 3 ) ])
         self.axes = axes
         self.axes_pad = None 
@@ -22,33 +22,42 @@ class Objectv3():
             self.pts[i] = vertices[i]
     def load_mesh(self, xx_flatten, yy_flatten, zz_flatten):
         """load flattened xx, yy, zz meshgrid data. This method r equires object to have a zero vector origin"""
-        self.pts = np.array([vector3.Vector3  for _ in range(len(xx_flatten) ) ])
-        for index in range(self.pts.size):
-            self.pts[index] = self.pts[index](xx_flatten[index], yy_flatten[index], zz_flatten[index])
+        length_ = len(xx_flatten) 
+        self.pts = np.array( [vector3.Vector3()  for _ in range(length_) ] )
+        for index in range(length_):
+            self.pts[index] =  vector3.Vector3(xx_flatten[index], yy_flatten[index], zz_flatten[index])
     def set_axes(self, ax):
         self.axes = ax
-    def show(self, ax, kwags = {} ):
-        self.axes = ax
-        self.axes_pad = ax.scatter(*np.array(list(map(lambda pt: [pt.x, pt.y, pt.z], self.pts ))).T, alpha = 0.3, s=0.5, **kwags)
+    def show(self, hide_bbox=False, **kwags  ):
+        """show vertices points"""
+        data = np.array(list(map(lambda pt: pt.to_numpy(), self.pts)))
+        self.axes_pad =  self.axes.scatter(*data.T, **kwags) # transpose to bucket each axis into x, y ,z parameters 
+
         self.bbox.update_box(self.pts, self.axes)
-    
+        if  hide_bbox:
+            self.remove_bbox()
     def unshow(self):
+        """remove vertices and bounding box"""
         if self.axes_pad:
             self.bbox.remove_box() # is there a way to hide the lines (hide method ?)
             self.axes_pad.remove()
         self.bbox.remove_touch_points()
     def xform(self, m: matrix_4x3.Matrix4x3):
+        """transform/translate vertices"""
         for i in range(self.pts.size):
             self.pts[i] = matrix_4x3.vector_mult(self.pts[i], m)
         self.center= center_of_gravity(self.pts)
-    def plot_point(self, v, ax, c= None):
-        ax.scatter(v.x, v.y, v.z, marker='o', s= 1, c = 'black' if c== None else c)
     def show_bbox(self):
         if self.axes == None:
             raise TypeError('BOX ERROR')
         # self.bbox.update_box(self.pts, self.axes)
     def remove_bbox(self):
         self.bbox.remove_box() # is there a way to hide the lines (hide method ?)
+    
+    
+    
+    
+    
     def intersect_bbox_test(self, obj, obj_id = 0):
         """ does test_object intersect current box
         
@@ -81,8 +90,6 @@ class Objectv3():
             print(f'distance={d}\tradius={obj.r}')
             test = d < obj.r
         return c, test
-    def copy(self):
-        return Ob
     # def tessellate(self):
     #     searchable_nets_per_parent = self.pts.size - 1 if (self.pts.size - 1 ) < 6 else 6 
     #     lock = threading.Lock()
@@ -104,7 +111,8 @@ def center_of_gravity(pts):
     v = vector3.Vector3(0,0,0)
     for v_ele in pts:
         v = v + v_ele
-    return np.divide(v, np.float32(len(pts)) ) 
+    return vector3.Vector3(*np.divide(v, np.float32(len(pts)) ) )
+
 def err_vector(v1, v2, size):
     return np.sum(np.square(v2-v1))/(size)
 
