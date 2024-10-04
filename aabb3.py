@@ -118,8 +118,10 @@ class AABB():
             for side in [a,b]:
                 ele = self.faces[plane][side]['plot']
                 if hasattr(ele, 'remove'):
-                    print(ele)
-                    ele.remove()                
+                    try:
+                        ele.remove()    
+                    except ValueError as e:
+                        print(e)
                     
     def update_box(self, pts, ax) ->None:
         self.empty()

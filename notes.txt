@@ -1,0 +1,2 @@
+- import root directory 
+    export PYTHONPATH="/your-path/v3:$PYTHONPATH"
