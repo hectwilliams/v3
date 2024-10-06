@@ -3,24 +3,21 @@ import vector3
 import matrix_4x3
 import numpy as np 
 import aabb3
-import threading
 import matplotlib.pyplot as plt 
-# from triangle_stuff import tessellates
 
 class Objectv3():
-    def __init__(self, center= np.zeros(shape=(3)), axes= any) -> None:
+    def __init__(self, center= vector3.Vector3(), axes= any) -> None:
         self.pts = np.array([vector3.Vector3(0, 0,0)  for _ in range( 3 ) ])
         self.axes = axes
         self.axes_pad = None 
         self.bbox = aabb3.AABB()
         self.center = center
-        # self.tesslte = triangle_stuff.tessellate.Tessellates
     def add_collection(self, vertices):
         number_of_vertices = len(vertices)
         self.pts = np.array([vector3.Vector3  for _ in range( len(number_of_vertices)) ])
         for i in range(number_of_vertices):
             self.pts[i] = vertices[i]
-    def load_mesh(self, xx_flatten, yy_flatten, zz_flatten):
+    def load_mesh(self, xx_flatten, yy_flatten, zz_flatten, type=0):
         """load flattened xx, yy, zz meshgrid data. This method r equires object to have a zero vector origin"""
         length_ = len(xx_flatten) 
         self.pts = np.array( [vector3.Vector3()  for _ in range(length_) ] )
@@ -32,7 +29,6 @@ class Objectv3():
         """show vertices points"""
         data = np.array(list(map(lambda pt: pt.to_numpy(), self.pts)))
         self.axes_pad =  self.axes.scatter(*data.T, **kwags) # transpose to bucket each axis into x, y ,z parameters 
-
         self.bbox.update_box(self.pts, self.axes)
         if  hide_bbox:
             self.remove_bbox()
@@ -50,13 +46,8 @@ class Objectv3():
     def show_bbox(self):
         if self.axes == None:
             raise TypeError('BOX ERROR')
-        # self.bbox.update_box(self.pts, self.axes)
     def remove_bbox(self):
         self.bbox.remove_box() # is there a way to hide the lines (hide method ?)
-    
-    
-    
-    
     
     def intersect_bbox_test(self, obj, obj_id = 0):
         """ does test_object intersect current box

@@ -15,5 +15,5 @@ if __name__ == "__main__":
     quadrilateral = Quadrilateral(vector3.Vector3(),ax)
     quadrilateral.show(alpha = 0.3, s=0.5, hide_bbox=False)
     quadrilateral.remove_bbox()
-    quadrilateral.connect_vertices()
+    quadrilateral.connect_vertices_plot()
     plt.show()

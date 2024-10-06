@@ -13,5 +13,5 @@ if __name__ == "__main__":
     heptagon = Heptagon(vector3.Vector3(),ax)
     heptagon.show(alpha = 0.3, s=0.5, hide_bbox=False)
     heptagon.remove_bbox()
-    heptagon.connect_vertices()
+    heptagon.connect_vertices_plot()
     plt.show()

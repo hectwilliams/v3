@@ -15,5 +15,5 @@ if __name__ == "__main__":
     nonagon = Nonagon(vector3.Vector3(),ax)
     nonagon.show(alpha = 0.3, s=0.5, hide_bbox=False)
     nonagon.remove_bbox()
-    nonagon.connect_vertices()
+    nonagon.connect_vertices_plot()
     plt.show()
