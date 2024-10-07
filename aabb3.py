@@ -11,7 +11,8 @@ LINE_MAP = [ [0,1], [1,3], [2,3], [0,2],[0,4], [4,6], [2,6], [4,5],[6,7],[5,7],[
 class AABB():
     def __repr__(self) -> str:
         return ('{}\n{}\n').format(self.vmax, self.vmin)
-    def __init__(self) -> None:
+    def __init__(self, axes) -> None:
+        self.axes = axes
         self.vmin = vector3.Vector3()
         self.vmax = vector3.Vector3()
         self.box_vertices = np.array([vector3.Vector3() for _ in range(8)])
@@ -80,6 +81,15 @@ class AABB():
             v_b = self.box_vertices[i_b]
             self.plot_buffer[i] = ax.plot( [v_a.x, v_b.x] , [v_a.y, v_b.y], [v_a.z, v_b.z] , c='black', alpha=0.3)
         self.is_on = True
+    def toggle_box(self):
+        if self.is_on:
+            for lines in self.plot_buffer:
+                for line in lines:
+                    curr_state = line.get_visible()
+                    line.set_visible(not curr_state)
+        else:
+            self.box(self.axes)
+
     def remove_box(self):
         if self.is_on:
             for i in range(len(LINE_MAP)):

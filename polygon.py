@@ -14,7 +14,7 @@ class Polygon(objectv3.Objectv3):
         if num_sides <= 2:
             raise ValueError('polygons requires at least 4 sides ')
         theta = np.deg2rad(np.linspace(theta_offset , 360, num=num_sides + 1))[:num_sides]
-        self.poly_num_sides = num_sides-2
+        self.poly_num_sides = num_sides
         alpha = ((np.pi/2) -  theta)
         x = kx * radius * np.cos(alpha)
         self.x = x 
@@ -36,23 +36,7 @@ class Polygon(objectv3.Objectv3):
         # generate mesh (TODO Thread this operation)
         self.mesh = mesh(self)
 
-    def connect_vertices_plot(self, **kwargs):
-        """Draw line connecting vertices
-        
-        Methods with _plot suffix follow matplotlib's axes.plot.kwargs dictionary structure
-        """
-        prev_ = -1
-        next_ = 0
-        self.line_connect = [Line3D for _ in range(self.pts.size)] 
-        for i in range (self.pts.size):
-            self.line_connect[i] = self.axes.plot(*zip(self.pts[prev_].to_numpy(), self.pts[next_].to_numpy())  , **kwargs)
-            prev_ = next_
-            next_ = prev_ + 1
-    def disconnect_vertices(self):
-        if hasattr(self, 'line_connect'):
-            for lines in self.line_connect:
-                for line in lines:
-                    line.remove()
+
     def show_mesh_plot(self, **kwargs):
         """Draw simple mesh
         
@@ -66,6 +50,11 @@ class Polygon(objectv3.Objectv3):
         if hasattr(self, 'mesh'):
             for node in self.mesh:
                 node.remove_node()
+    def toggle_mesh(self):
+        if hasattr(self, 'mesh'):
+            for node in self.mesh:
+                node.toggle_node()
+        
     def show_triangulation_normal(self):
         """show triangle normals"""
         if hasattr(self, 'mesh'):

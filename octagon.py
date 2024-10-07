@@ -4,7 +4,7 @@ import vector3
 import polygon
 
 class Octagon(polygon.Polygon):
-    def __init__(self, center, axes, radius=1):
+    def __init__(self, axes, center = vector3.Vector3(), radius=1):
         super().__init__(num_sides=8, center=center, axes=axes, radius=radius, theta_offset=0)
 
 if __name__ == "__main__":

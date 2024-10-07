@@ -4,13 +4,14 @@ import matrix_4x3
 import numpy as np 
 import aabb3
 import matplotlib.pyplot as plt 
+from  mpl_toolkits.mplot3d.art3d import Line3D
 
 class Objectv3():
     def __init__(self, center= vector3.Vector3(), axes= any) -> None:
         self.pts = np.array([vector3.Vector3(0, 0,0)  for _ in range( 3 ) ])
         self.axes = axes
         self.axes_pad = None 
-        self.bbox = aabb3.AABB()
+        self.bbox = aabb3.AABB(axes)
         self.center = center
     def add_collection(self, vertices):
         number_of_vertices = len(vertices)
@@ -48,7 +49,43 @@ class Objectv3():
             raise TypeError('BOX ERROR')
     def remove_bbox(self):
         self.bbox.remove_box() # is there a way to hide the lines (hide method ?)
+
+    def connect_vertices_plot(self, **kwargs):
+        """Draw line connecting vertices
+        
+        Methods with _plot suffix follow matplotlib's axes.plot.kwargs dictionary structure
+        """
+        prev_ = -1
+        next_ = 0
+        self.line_connect = [Line3D for _ in range(self.pts.size)] 
+        for i in range (self.pts.size):
+            self.line_connect[i] = self.axes.plot(*zip(self.pts[prev_].to_numpy(), self.pts[next_].to_numpy())  , **kwargs)
+            prev_ = next_
+            next_ = prev_ + 1
+    def disconnect_vertices(self):
+        if hasattr(self, 'line_connect'):
+            for lines in self.line_connect:
+                for line in lines:
+                    line.remove()
+            self.line_connect = None
+            del self.line_connect
+    def toggle_vertices(self):
+        if self.axes_pad:
+            current_state = self.axes_pad.get_visible()
+            self.axes_pad.set_visible(not current_state)
     
+    def toggle_connect_line(self):
+        if hasattr(self, 'line_connect'):
+            for lines in self.line_connect:
+                for line in lines:
+                    curr_state = line.get_visible()
+                    line.set_visible(not curr_state)
+            self.line_connect = None 
+            del self.line_connect
+        else:
+            self.connect_vertices_plot(c='black')
+    def toggle_bbox(self):
+        self.bbox.toggle_box()
     def intersect_bbox_test(self, obj, obj_id = 0):
         """ does test_object intersect current box
         

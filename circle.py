@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 USE_XY_GRID = False
 class Circle(polygon.Polygon):
-    def __init__(self, center, axes, radius=1.0, flat= False, mesh_mode = 0):
+    def __init__(self, axes,center=vector3.Vector3(),radius=1.0, flat= False, mesh_mode = 0):
         print(mesh_mode)
         super().__init__(num_sides=50, center=center, axes=axes, radius=radius, theta_offset=0, xy_is_mesh_grid=USE_XY_GRID, mesh_mode=mesh_mode ) 
         if USE_XY_GRID:

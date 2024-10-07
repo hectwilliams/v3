@@ -1,11 +1,10 @@
 # 3D Primer: Simple 3D Development Tasks
 
-## Cover Page
-* Salutation!
-![cool gif](media/spin_anim.gif)
+## App
+![cool gif](media/gui_0.gif)
 
-## Contents 
-* TBD
+## System Overview
+![cool gif](media/gui_0.png)
 
 ## Object Tree 
 ![object tree](media/objectTree.1.png)

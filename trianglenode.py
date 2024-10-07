@@ -68,6 +68,15 @@ class Trianglenode():
                 for lines in node_line3d:
                     for line in lines:
                         line.remove() 
+            self.line_connect = None 
+    def toggle_node(self):
+        if self.line_connect:
+            for node_line3d in self.line_connect:
+                for lines in node_line3d:
+                    curr_state = lines.get_visible()
+                    lines.set_visible( not curr_state)
+        else:
+            self.plot_node(c='black')
 def classify(*angles_rad):
     res = ''
     for radians in angles_rad:

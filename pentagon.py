@@ -5,7 +5,7 @@ import time
 from  mpl_toolkits.mplot3d.art3d import Line3DCollection, Path3DCollection, Text3D, Line3D
 import polygon
 class Pentagon(polygon.Polygon):
-    def __init__(self, center, axes, radius=1):
+    def __init__(self, axes, center = vector3.Vector3(), radius=1):
         super().__init__(num_sides=5, center=center, axes=axes, radius=radius, theta_offset=0)
 
 if __name__ == "__main__":

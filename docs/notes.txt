@@ -1,9 +1,10 @@
 - import root directory 
     export PYTHONPATH="/your-path/v3:$PYTHONPATH"
 
--canvas scrollbar (links)
- https://www.devanddep.com/tutorial/tkinter/scrollable-frames-in-tkinter.html#:~:text=Make%20a%20frame%20scrollable%20in%20Tkinter%20by
- https://www.pythontutorial.net/tkinter/tkinter-scrollbar/#:~:text=Tkinter%20scrollbar%20widget%20is%20not%20a%20part
+- canvas scrollbar (links)
+    https://www.devanddep.com/tutorial/tkinter/scrollable-frames-in-tkinter.html#:~:text=Make%20a%20frame%20scrollable%20in%20Tkinter%20by
+    https://www.pythontutorial.net/tkinter/tkinter-scrollbar/#:~:text=Tkinter%20scrollbar%20widget%20is%20not%20a%20part
+    https://www.pythontutorial.net/tkinter/tkinter-event-binding/
 
 -- commit notes
     git commit -m ":tada: for initial commit"
