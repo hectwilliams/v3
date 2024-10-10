@@ -1,7 +1,7 @@
 # 3D Primer: Simple 3D Development Tasks
 
 ## App
-![cool gif](media/gui_circle_mesh_demo1.gif.gif)
+![cool gif](media/gui_circle_mesh_demo1.gif)
 
 ## System Overview
 ![cool gif](media/gui_0.png)
