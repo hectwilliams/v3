@@ -1,9 +1,10 @@
 """Operations on Object created using vectors """
 import vector3
 import matrix_4x3
-import numpy as np 
 import aabb3
 import matplotlib.pyplot as plt 
+import time 
+import numpy as np
 from  mpl_toolkits.mplot3d.art3d import Line3D
 
 class Objectv3():
@@ -60,11 +61,26 @@ class Objectv3():
         """
         prev_ = -1
         next_ = 0
-        self.line_connect = [Line3D for _ in range(self.pts.size)] 
-        for i in range (self.pts.size):
-            self.line_connect[i] = self.axes.plot(*zip(self.pts[prev_].to_numpy(), self.pts[next_].to_numpy())  , **kwargs)
+        
+
+        condition = np.array(list(map(lambda v: True if v.z == 0 else False, self.pts)))
+        contour_pts = np.extract( condition, self.pts)
+        self.line_connect = [Line3D for _ in range(contour_pts.size)] 
+        
+        # sort circle of points on plane to create ordered points which create a loop
+        # dataset_pts = sorted(dataset_pts, key=lambda v_pt:  v_pt.y )
+        
+        len_over_2 = int(contour_pts.size/2)
+        print(len_over_2)
+
+        contour_pts = np.array(sorted(contour_pts.tolist(), key=lambda v_pt:  np.atan2(v_pt.y , v_pt.x) ))
+        
+            # print(dataset_pts)xs
+        for i in range (contour_pts.size):
+            self.line_connect[i] = self.axes.plot(*zip(contour_pts[prev_].to_numpy(), contour_pts[next_].to_numpy())  , **kwargs)
             prev_ = next_
             next_ = prev_ + 1
+
     def disconnect_vertices(self):
         if hasattr(self, 'line_connect'):
             for lines in self.line_connect:

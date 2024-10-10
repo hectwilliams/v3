@@ -1,3 +1,4 @@
+import objectv3
 import numpy as np 
 import tkinter.font
 import tkinter as tk 
@@ -17,7 +18,7 @@ C_POLYGON_MENU_Y =  [ 192, 257, 321 ,385, 450 ,514 ]
 C_OPTION_MENU_ITEMS = ['Select Polygon', 'triangle', 'quadrilateral', 'pentagon', 'hexagon', 'heptagon', 'octagon', 'nonagon', 'decagon', 'circle', 'circle3d']
 C_PLACEMENT_GRID_N = 15
 C_SAMPLES_PER_AXIS = 15
-
+C_PLACEMENT_DICT =dict( width=12, height=2, borderwidth=1.6, relief="groove" )
 class SomeGui():
     """ Have not decided on a clsss for the gui"""
     def __init__(self, title = '', choices=C_OPTION_MENU_ITEMS):
@@ -32,9 +33,14 @@ class SomeGui():
         self.hold_counter_start = 0
         self.busy = False
         self.lock = threading.Lock()
+        self.x = np.linspace(0, self.screen_width, num=C_PLACEMENT_GRID_N)
+        self.y = np.linspace(0, self.screen_height, num=C_PLACEMENT_GRID_N)
+        self.delta_x = self.x[1]
+        self.delta_y = self.y[1]
+        self.x_pl_map = ( self.x * np.ones(shape=C_PLACEMENT_GRID_N)[:, None]).flatten()
+        self.y_pl_map =  (self.y[:, None] * np.ones(shape=C_PLACEMENT_GRID_N)).flatten()
         # create placement grid (not tkinter grid library)
         self.placement_grid = np.array([  str for _ in range(int(np.square(C_PLACEMENT_GRID_N)))]).reshape((C_PLACEMENT_GRID_N, C_PLACEMENT_GRID_N)) # alloecate str objects  
-        self.label_cells()
         # figure
         self.figure_gui = figuregui.FigureGui(self.root,self.delta_x, self.delta_y)
         # option menu
@@ -44,6 +50,7 @@ class SomeGui():
         self.button_gui = buttongui.ButtonGui(self.root, self.delta_x, self.delta_y, self.figure_gui)
         self.root.bind('<Button>', self.press)
         self.root.bind('<ButtonRelease>', self.release)
+
     def press(self, e):
         thr = threading.Thread( target=button_press_handler, args=(self, 3))
         thr.start()
@@ -53,26 +60,14 @@ class SomeGui():
     def label_cells(self):
         if not hasattr(self, 'place_cells_labeled'):
             self.place_cells_labeled = True
-            x = np.linspace(0, self.screen_width, num=C_PLACEMENT_GRID_N)
-            y = np.linspace(0, self.screen_height, num=C_PLACEMENT_GRID_N)
-            self.delta_y = y[1]
-            self.delta_x = x[1]
-            x = x * np.ones(shape=C_PLACEMENT_GRID_N)[:, None]
-            x = x.flatten()
-            y = y[:, None] * np.ones(shape=C_PLACEMENT_GRID_N)
-            y = y.flatten()
-            self.place_map = [self.topology( int(np.round(y[i],2)), int(np.round(x[i],2)) )  for i in range(x.size)]
-            # for i in range(int(C_PLACEMENT_GRID_N**2)):
-            #     p_row =  int(np.floor(i/C_PLACEMENT_GRID_N))
-            #     p_col = (i % C_PLACEMENT_GRID_N)
-            #     self.placement_grid[p_row][p_col]  = f'({  int(y[i] )  }, { int( x[i])})'
+            self.place_map = [self.topology( int(np.round(  self.y_pl_map [i],2)), int(np.round( self.x_pl_map [i],2)) )  for i in range( self.x_pl_map.size)]
     def run(self):
         self.root.mainloop()
     def event_inject_plt_show(self, *args):
         self.canvas_fig.draw()
 
     def topology(self, row, col):
-        label= tk.Label(self.root, text=f'{col}, {row}', width=12, height=2, font=tkinter.font.Font(family="Arial", size=7) , borderwidth=1.6, relief="groove" )
+        label= tk.Label(self.root, text='{col}, {row}', *C_PLACEMENT_DICT)
         label.place( x=col, y=row)        
         return label
     def toggle_place_map(self):
@@ -80,10 +75,8 @@ class SomeGui():
             for label in self.place_map:
                 label.place_forget() 
             del self.place_map
-            del self.place_cells_labeled  
         else:
             self.label_cells() 
-            print('relabel')
 
 def button_press_handler(self, wait_time_sec):
     with  self.lock:
