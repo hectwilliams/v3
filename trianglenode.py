@@ -9,7 +9,6 @@ class Trianglenode():
         self.show_normal= False
         self.show_vertex_node = False 
         self.show_lines = False
-        self.line_connect = False 
         self.axes = axes
 
         self.v1 = v1
@@ -63,20 +62,21 @@ class Trianglenode():
             self.axes.plot(*zip(self.v3.to_numpy() ,self.v1.to_numpy()),  **kwargs),
         ]
     def remove_node(self):
-        if self.line_connect:
+        if hasattr(self, 'line_connect'):
             for node_line3d in self.line_connect:
                 for lines in node_line3d:
-                    for line in lines:
-                        line.remove() 
-            self.line_connect = None 
+                    if hasattr(lines, 'remove'):
+                        lines.remove() 
+            self.line_connect = None
+            del  self.line_connect
     def toggle_node(self):
-        if self.line_connect:
+        if hasattr(self, 'line_connect'):
             for node_line3d in self.line_connect:
                 for lines in node_line3d:
                     curr_state = lines.get_visible()
                     lines.set_visible( not curr_state)
         else:
-            self.plot_node(c='black')
+            self.plot_node(c='blue', linewidth = 0.5)
 def classify(*angles_rad):
     res = ''
     for radians in angles_rad:

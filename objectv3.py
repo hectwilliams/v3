@@ -13,14 +13,16 @@ class Objectv3():
         self.axes_pad = None 
         self.bbox = aabb3.AABB(axes)
         self.center = center
+
     def add_collection(self, vertices):
         number_of_vertices = len(vertices)
         self.pts = np.array([vector3.Vector3  for _ in range( len(number_of_vertices)) ])
         for i in range(number_of_vertices):
             self.pts[i] = vertices[i]
-    def load_mesh(self, xx_flatten, yy_flatten, zz_flatten, type=0):
+    def load_mesh(self, xx_flatten, yy_flatten, zz_flatten):
         """load flattened xx, yy, zz meshgrid data. This method r equires object to have a zero vector origin"""
         length_ = len(xx_flatten) 
+        print(length_)
         self.pts = np.array( [vector3.Vector3()  for _ in range(length_) ] )
         for index in range(length_):
             self.pts[index] =  vector3.Vector3(xx_flatten[index], yy_flatten[index], zz_flatten[index])
@@ -29,6 +31,7 @@ class Objectv3():
     def show(self, hide_bbox=False, **kwags  ):
         """show vertices points"""
         data = np.array(list(map(lambda pt: pt.to_numpy(), self.pts)))
+        print(self.axes)
         self.axes_pad =  self.axes.scatter(*data.T, **kwags) # transpose to bucket each axis into x, y ,z parameters 
         self.bbox.update_box(self.pts, self.axes)
         if  hide_bbox:
@@ -86,6 +89,7 @@ class Objectv3():
             self.connect_vertices_plot(c='black')
     def toggle_bbox(self):
         self.bbox.toggle_box()
+    
     def intersect_bbox_test(self, obj, obj_id = 0):
         """ does test_object intersect current box
         
@@ -118,22 +122,6 @@ class Objectv3():
             print(f'distance={d}\tradius={obj.r}')
             test = d < obj.r
         return c, test
-    # def tessellate(self):
-    #     searchable_nets_per_parent = self.pts.size - 1 if (self.pts.size - 1 ) < 6 else 6 
-    #     lock = threading.Lock()
-    #     tessellates.test()
-    #     # self.tesslte = triangle_stuff.tessellate.Tessellates(mode='load', num_nodes =self.pts.size , axes=self.axes,  is_tessellate=True)
-    #     # threads = [ 
-    #     # threading.Thread( target=thr_triangle,  args=( self.pts[i], self.pts, list(range(0, i)) + list(range(i + 1, self.pts.size)),  [[np.finfo(np.float64).max, vector3.Vector3] for _ in range(searchable_nets_per_parent)]  ,searchable_nets_per_parent,  self.tesslte , self.axes, lock) )  # map
-    #     #     for i in range(self.pts.size)
-    #     # ]
-    #     # for thr in threads:
-    #     #     thr.start()
-    #     # for thr in threads:
-    #     #     thr.join()
-    #     # self.tesslte.sweep()
-        
-
 
 def center_of_gravity(pts):
     v = vector3.Vector3(0,0,0)
