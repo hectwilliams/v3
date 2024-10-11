@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 import matplotlib.figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import triangle, quadrilateral, pentagon, hexagon, heptagon, octagon, nonagon, decagon, circle
-
+import threading
+import quarternion
+import numpy as np 
+import time 
 class FigureGui():
     def __init__(self, root, deltax, deltay):
         self.figure = matplotlib.figure.Figure(figsize=(6, 4), dpi=100) # (w, h) inches * 100 dpi (dots per inch)
@@ -17,7 +20,7 @@ class FigureGui():
         self.frame.lift()
         self.frame.lift()
         self.axes.axis('off')
-
+        self.lock = threading.Lock() 
         self.active_obj = None
     def option_changed(self, str):
         if str == 'triangle':
@@ -43,16 +46,19 @@ class FigureGui():
         else:
             self.active_obj = None
         
-        if   self.active_obj:
-            self.axes.clear()
-            self.axes.axis('off')
-            self.active_obj.show(hide_bbox=True , s=1)
-            self.active_obj.remove_bbox()
-            self.canvas_fig.draw()
+        if self.active_obj:
+            self.repaint_canvas() 
         
     def button_pressed(self, event: tk.Event):
         if not self.active_obj:
             raise RuntimeWarning('Not image on canvas')
+        if event.widget.index_ != 4 and hasattr(self, 'aninmation_on'):
+            if self.lock.locked():
+                print('DAMNNt')
+            with self.lock:
+                del self.aninmation_on
+            time.sleep(0.0)
+
         if event.widget.index_ == 0:
             self.active_obj.toggle_vertices()
             self.canvas_fig.draw()
@@ -65,3 +71,31 @@ class FigureGui():
         elif event.widget.index_ == 3:
             self.active_obj.toggle_mesh()
             self.canvas_fig.draw()
+        elif event.widget.index_ == 4:
+            if not hasattr(self, 'aninmation_on'):
+                self.aninmation_on = True
+                thr = threading.Thread( target=rotate_about_z_axis, args= (self, self.lock,) )
+                thr.start()
+            else:
+                self.aninmation_on = not self.aninmation_on
+
+    def repaint_canvas(self):
+        self.axes.clear()
+        self.axes.axis('off')
+        self.active_obj.show(hide_bbox=True , s=1)
+        self.active_obj.remove_bbox()
+        self.canvas_fig.draw()
+
+def rotate_about_z_axis(figure_gui, lock ):
+    deg = 1
+    q = quarternion.Quarternion()
+    q.set_to_rotate_about_z(np.deg2rad(deg))
+    while True:
+        with lock:
+            if not hasattr(figure_gui, 'aninmation_on'):
+                break
+            elif figure_gui.aninmation_on:
+                figure_gui.active_obj.xform_q(q)
+                # figure_gui.active_obj.sequencer()
+                figure_gui.repaint_canvas()
+        time.sleep(0.1)

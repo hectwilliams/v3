@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import time 
 import numpy as np
 from  mpl_toolkits.mplot3d.art3d import Line3D
+import quarternion
 
 class Objectv3():
     def __init__(self, center= vector3.Vector3(), axes= any) -> None:
@@ -32,7 +33,6 @@ class Objectv3():
     def show(self, hide_bbox=False, **kwags  ):
         """show vertices points"""
         data = np.array(list(map(lambda pt: pt.to_numpy(), self.pts)))
-        print(self.axes)
         self.axes_pad =  self.axes.scatter(*data.T, **kwags) # transpose to bucket each axis into x, y ,z parameters 
         self.bbox.update_box(self.pts, self.axes)
         if  hide_bbox:
@@ -45,8 +45,12 @@ class Objectv3():
         self.bbox.remove_touch_points()
     def xform(self, m: matrix_4x3.Matrix4x3):
         """transform/translate vertices"""
-        for i in range(self.pts.size):
-            self.pts[i] = matrix_4x3.vector_mult(self.pts[i], m)
+        xform_helper(self.pts, m)
+        self.center= center_of_gravity(self.pts)
+    def xform_q(self, q: quarternion.Quarternion ):
+        m = matrix_4x3.Matrix4x3()
+        m.from_quarternion(q)
+        xform_helper(self.pts, m)
         self.center= center_of_gravity(self.pts)
     def show_bbox(self):
         if self.axes == None:
@@ -71,8 +75,6 @@ class Objectv3():
         # dataset_pts = sorted(dataset_pts, key=lambda v_pt:  v_pt.y )
         
         len_over_2 = int(contour_pts.size/2)
-        print(len_over_2)
-
         contour_pts = np.array(sorted(contour_pts.tolist(), key=lambda v_pt:  np.atan2(v_pt.y , v_pt.x) ))
         
             # print(dataset_pts)xs
@@ -156,3 +158,8 @@ def normalize(n: vector3.Vector3):
         for i in range(n.size):
             n[i] = n[i]/mag
     return vector3.Vector3(*n)
+
+def xform_helper( pts, m : matrix_4x3.Matrix4x3):
+    """ helper for .xform methold above, performs vector tranform/translate operations"""
+    for i in range(pts.size):
+        pts[i] = matrix_4x3.vector_mult(pts[i], m)

@@ -12,9 +12,9 @@ import buttongui
 import threading
 import time 
 
-C_POLYGON_MENU = ['dots',  'connect_nodes' ,'bbox', 'mesh', 'normal', 'loop']  
-C_POLYGON_MENU_X = 925
-C_POLYGON_MENU_Y =  [ 192, 257, 321 ,385, 450 ,514 ]
+# C_POLYGON_MENU = ['dots',  'connect_nodes' ,'bbox', 'mesh', 'animate', 'loop']  
+# C_POLYGON_MENU_X = 925
+# C_POLYGON_MENU_Y =  [ 192, 257, 321 ,385, 450 ,514 ]
 C_OPTION_MENU_ITEMS = ['Select Polygon', 'triangle', 'quadrilateral', 'pentagon', 'hexagon', 'heptagon', 'octagon', 'nonagon', 'decagon', 'circle', 'circle3d']
 C_PLACEMENT_GRID_N = 15
 C_SAMPLES_PER_AXIS = 15
@@ -39,6 +39,7 @@ class SomeGui():
         self.delta_y = self.y[1]
         self.x_pl_map = ( self.x * np.ones(shape=C_PLACEMENT_GRID_N)[:, None]).flatten()
         self.y_pl_map =  (self.y[:, None] * np.ones(shape=C_PLACEMENT_GRID_N)).flatten()
+        self.place_cells_labeled = False 
         # create placement grid (not tkinter grid library)
         self.placement_grid = np.array([  str for _ in range(int(np.square(C_PLACEMENT_GRID_N)))]).reshape((C_PLACEMENT_GRID_N, C_PLACEMENT_GRID_N)) # alloecate str objects  
         # figure
@@ -58,7 +59,7 @@ class SomeGui():
         with self.lock:
             self.busy = False
     def label_cells(self):
-        if not hasattr(self, 'place_cells_labeled'):
+        if not self.place_cells_labeled:
             self.place_cells_labeled = True
             self.place_map = [self.topology( int(np.round(  self.y_pl_map [i],2)), int(np.round( self.x_pl_map [i],2)) )  for i in range( self.x_pl_map.size)]
     def run(self):
@@ -67,14 +68,16 @@ class SomeGui():
         self.canvas_fig.draw()
 
     def topology(self, row, col):
-        label= tk.Label(self.root, text='{col}, {row}', *C_PLACEMENT_DICT)
+        label= tk.Label(self.root, text=f'{col}, {row}', **C_PLACEMENT_DICT)
         label.place( x=col, y=row)        
         return label
     def toggle_place_map(self):
         if hasattr(self, 'place_map'):
             for label in self.place_map:
                 label.place_forget() 
+            self.place_cells_labeled= False
             del self.place_map
+
         else:
             self.label_cells() 
 

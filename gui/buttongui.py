@@ -5,7 +5,7 @@ import os
 from PIL import Image, ImageTk
 import numpy as np
 
-C_POLYGON_MENU = ['dots.png',  'connect_nodes.png' ,'bbox.png', 'mesh.png', 'normal.png', 'loop.png']  
+C_POLYGON_MENU = ['dots.png',  'connect_nodes.png' ,'bbox.png', 'mesh.png', 'animate.png', 'animate.png']  
 C_POLYGON_MENU_X = 925
 C_POLYGON_MENU_Y =  [ 192, 257, 321 ,385, 450 ,514 ]
 
@@ -17,7 +17,7 @@ class ButtonGui():
         self.frames = np.array([tk.Frame for i in range(len(C_POLYGON_MENU))])
         self.buttons = np.array([tk.Frame for i in range(len(C_POLYGON_MENU))])
 
-        for i, fname in enumerate(C_POLYGON_MENU[:4]):
+        for i, fname in enumerate(C_POLYGON_MENU[:5]):
             path = os.path.join(cwd, 'media', fname)
             img_local = Image.open(path) 
             img = img_local.resize(size=(int(deltax), int(deltay)), resample=Image.Resampling.LANCZOS ) 
