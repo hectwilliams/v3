@@ -9,6 +9,10 @@ import quarternion
 import numpy as np 
 import time 
 import tooltip
+C_PLACE_HEIGHT_STEP_MAX = 6
+C_PLACE_HEIGHT_STEP_MIN = 3
+C_PLACE_WIDTH_STEP_MAX = 9
+C_PLACE_WIDTH_STEP_MIN = 3
 
 class FigureGui():
     def __init__(self, root, deltax, deltay):
@@ -18,7 +22,7 @@ class FigureGui():
         self.frame = tk.Frame(self.root)
         self.canvas_fig = FigureCanvasTkAgg(self.figure, self.frame)
         self.canvas_fig.get_tk_widget().place(relheight=1, relwidth=1)
-        self.frame.place(x=deltax*3, y=192, width= (9 * deltax) - (deltax*3),  height=6*deltay)
+        self.frame.place(x=deltax*C_PLACE_WIDTH_STEP_MIN, y=deltay*C_PLACE_HEIGHT_STEP_MIN, width= (C_PLACE_WIDTH_STEP_MAX * deltax) - (deltax*C_PLACE_WIDTH_STEP_MIN),  height=C_PLACE_HEIGHT_STEP_MAX*deltay)
         self.frame.lift()
         self.frame.lift()
         self.axes.axis('off')
@@ -26,6 +30,8 @@ class FigureGui():
         self.active_obj = None
         self.root.bind('<Motion>', self.motion )
         self.mouse_pos = dict(x=0, y=0)
+    def update_figure(self, deltax, deltay):
+        self.frame.place(x=deltax*C_PLACE_WIDTH_STEP_MIN, y=deltay*C_PLACE_HEIGHT_STEP_MIN, width= (C_PLACE_WIDTH_STEP_MAX * deltax) - (deltax*C_PLACE_WIDTH_STEP_MIN),  height=C_PLACE_HEIGHT_STEP_MAX*deltay)
     def motion(self, event:tk.Event):
         self.mouse_pos['x'] = event.x_root
         self.mouse_pos['y'] = event.y_root
