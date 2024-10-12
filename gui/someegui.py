@@ -19,6 +19,7 @@ C_OPTION_MENU_ITEMS = ['Select Polygon', 'triangle', 'quadrilateral', 'pentagon'
 C_PLACEMENT_GRID_N = 15
 C_SAMPLES_PER_AXIS = 15
 C_PLACEMENT_DICT =dict( width=12, height=2, borderwidth=1.6, relief="groove" )
+C_HOLD_DOWN_TIME = 5
 class SomeGui():
     """ Have not decided on a clsss for the gui"""
     def __init__(self, title = '', choices=C_OPTION_MENU_ITEMS):
@@ -53,7 +54,7 @@ class SomeGui():
         self.root.bind('<ButtonRelease>', self.release)
 
     def press(self, e):
-        thr = threading.Thread( target=button_press_handler, args=(self, 3))
+        thr = threading.Thread( target=button_press_handler, args=(self, C_HOLD_DOWN_TIME))
         thr.start()
     def release(self, e):
         with self.lock:

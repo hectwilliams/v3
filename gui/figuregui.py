@@ -8,6 +8,8 @@ import threading
 import quarternion
 import numpy as np 
 import time 
+import tooltip
+
 class FigureGui():
     def __init__(self, root, deltax, deltay):
         self.figure = matplotlib.figure.Figure(figsize=(6, 4), dpi=100) # (w, h) inches * 100 dpi (dots per inch)
@@ -22,6 +24,11 @@ class FigureGui():
         self.axes.axis('off')
         self.lock = threading.Lock() 
         self.active_obj = None
+        self.root.bind('<Motion>', self.motion )
+        self.mouse_pos = dict(x=0, y=0)
+    def motion(self, event:tk.Event):
+        self.mouse_pos['x'] = event.x_root
+        self.mouse_pos['y'] = event.y_root
     def option_changed(self, str):
         if str == 'triangle':
             self.active_obj = triangle.Triangle(self.axes)
@@ -45,19 +52,21 @@ class FigureGui():
             self.active_obj = circle.Circle(self.axes, use_mesh_grid=True)
         else:
             self.active_obj = None
-        
         if self.active_obj:
             self.repaint_canvas() 
-        
     def button_pressed(self, event: tk.Event):
         if not self.active_obj:
             raise RuntimeWarning('Not image on canvas')
+        
+        if  hasattr(self, 'tooltopbox') and hasattr(self.tooltopbox, 'root'):
+            raise RuntimeWarning('tooltip not exited')
+        
         if event.widget.index_ != 4 and hasattr(self, 'aninmation_on'):
-            if self.lock.locked():
-                print('DAMNNt')
-            with self.lock:
-                del self.aninmation_on
-            time.sleep(0.0)
+            msg = 'please stop animation, before selection'
+            thr = threading.Thread(target=animate_warning, args=(self, msg, self.mouse_pos['x'], self.mouse_pos['y'] ))
+            thr.start()
+            del self.aninmation_on
+            return 
 
         if event.widget.index_ == 0:
             self.active_obj.toggle_vertices()
@@ -86,16 +95,25 @@ class FigureGui():
         self.active_obj.remove_bbox()
         self.canvas_fig.draw()
 
+def animate_warning(figure_gui,  msg, x, y):
+    figure_gui.tooltopbox = tooltip.Tooltip(text=msg, x= x , y = y )
+    t0 = time.time() 
+    while True:
+        elaspsed_time = time.time() - t0
+        if elaspsed_time > 2:
+            figure_gui.tooltopbox.root.event_generate('<Leave>') 
+            break
+    del figure_gui.tooltopbox 
+
+#TODO rotation does not following contour on z place 
 def rotate_about_z_axis(figure_gui, lock ):
     deg = 1
     q = quarternion.Quarternion()
     q.set_to_rotate_about_z(np.deg2rad(deg))
     while True:
-        with lock:
-            if not hasattr(figure_gui, 'aninmation_on'):
-                break
-            elif figure_gui.aninmation_on:
-                figure_gui.active_obj.xform_q(q)
-                # figure_gui.active_obj.sequencer()
-                figure_gui.repaint_canvas()
-        time.sleep(0.1)
+        if not hasattr(figure_gui, 'aninmation_on'):
+            break
+        elif figure_gui.aninmation_on:
+            figure_gui.active_obj.xform_q(q)
+            figure_gui.repaint_canvas()
+        time.sleep(0.01)
