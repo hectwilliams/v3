@@ -1,7 +1,7 @@
 # 3D Primer: Simple 3D Development Tasks
 
 ## App
-![cool gif](media/gui_circle_mesh_demo1.gif)
+![cool gif](media/demo3.gif)
 
 ## System Overview
 ![cool gif](media/gui_0.png)
@@ -10,5 +10,5 @@
 ![object tree](media/objectTree.1.png)
 
 ## References
-- "3D Math Primer for Graphics and Game Developmen t" 
+- "3D Math Primer for Graphics and Game Development" 
 

@@ -9,6 +9,7 @@ import quarternion
 import numpy as np 
 import time 
 import tooltip
+
 C_PLACE_HEIGHT_STEP_MAX = 6
 C_PLACE_HEIGHT_STEP_MIN = 3
 C_PLACE_WIDTH_STEP_MAX = 9
@@ -69,7 +70,7 @@ class FigureGui():
         
         if event.widget.index_ != 4 and hasattr(self, 'aninmation_on'):
             msg = 'please stop animation, before selection'
-            thr = threading.Thread(target=animate_warning, args=(self, msg, self.mouse_pos['x'], self.mouse_pos['y'] ))
+            thr = threading.Thread(target=animate_warning, args=(self, msg, self.mouse_pos['x'], self.mouse_pos['y'] , self.scale_factor_ ))
             thr.start()
             del self.aninmation_on
             return 
@@ -93,7 +94,9 @@ class FigureGui():
                 thr.start()
             else:
                 self.aninmation_on = not self.aninmation_on
-
+    def clear_canvas(self):
+        self.axes.clear()
+        self.axes.axis('off')
     def repaint_canvas(self):
         self.axes.clear()
         self.axes.axis('off')
@@ -101,13 +104,13 @@ class FigureGui():
         self.active_obj.remove_bbox()
         self.canvas_fig.draw()
 
-def animate_warning(figure_gui,  msg, x, y):
-    figure_gui.tooltopbox = tooltip.Tooltip(text=msg, x= x , y = y )
+def animate_warning(figure_gui,  msg, x, y, text_scale_factor=1):
+    figure_gui.tooltopbox = tooltip.Tooltip(text=msg, x= x , y = y , text_scale_factor = text_scale_factor)
     t0 = time.time() 
     while True:
         elaspsed_time = time.time() - t0
         if elaspsed_time > 2:
-            figure_gui.tooltopbox.root.event_generate('<Leave>') 
+            figure_gui.tooltopbox.root.event_generate('<Leave>') # simulated event destroys the widget 
             break
     del figure_gui.tooltopbox 
 
