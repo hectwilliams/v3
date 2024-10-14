@@ -12,7 +12,7 @@ class Polygon(objectv3.Objectv3):
         self.poly_num_sides = num_sides
         self.radius = radius
         self.center = center 
-        
+        self.subclass_name = subclass_name
         if num_sides <= 2:
             raise ValueError('polygons requires at least 4 sides ')
         theta = np.deg2rad(np.linspace(theta_offset , 360, num=num_sides + 1))[:num_sides]
@@ -30,13 +30,15 @@ class Polygon(objectv3.Objectv3):
         z = np.zeros(shape=x.shape)
         self.z = z
 
+        """loads datapoints and creates triangulation"""
         if not self.xy_is_mesh_grid:
-            self.load_mesh(x, y ,z) # change method new TODO 
-            self.triangulate_mesh_contour( mesh_mode)
+            self.load_mesh(self.x, self.y ,self.z) # change method new TODO 
+            self.triangulate_mesh_contour( self.mesh_mode)
         if self.xy_is_mesh_grid:
-            self.load_mesh(*generator_grid(subclass_name, x , y, self.radius)) 
+            self.load_mesh(*generator_grid(self.subclass_name, self.x , self.y, self.radius)) 
             self.triangulate_mesh_grid()
         self.mesh = mesh(self)
+
 
     def show_mesh_plot(self, **kwargs):
         """Draw simple mesh
@@ -52,6 +54,10 @@ class Polygon(objectv3.Objectv3):
             for node in self.mesh:
                 node.remove_node()
     def toggle_mesh(self, ):
+        
+        if hasattr(self, 'aninmation_on'):
+            print('hector willidms')
+
         if hasattr(self, 'mesh'):
             if self.xy_is_mesh_grid:
                 for node in self.mesh:
@@ -79,13 +85,25 @@ class Polygon(objectv3.Objectv3):
         if hasattr(self, 'mesh'):
             for node in self.mesh:
                 node.remove_normal()
-        
+    def re_sequencer(self):
+        """reload local buffers; function must be called after polygon points been updated"""
+        data = np.array(list(map(lambda ele: ele.to_numpy(), self.pts)))
+        self.x = data[:, 0]
+        self.y = data[:, 1]
+        self.z = data[:, 2]
+        if not self.xy_is_mesh_grid:
+            self.triangulate_mesh_contour( self.mesh_mode)
+        else:
+            self.triangulate_mesh_grid()
+        self.mesh = mesh(self)
     def xform(self, m):
         self.renove_mesh_plot()
         self.disconnect_vertices()
         super().xform(m)
-        self.mesh = mesh(self)
-
+        self.re_sequencer()
+    def xform_q(self, q):
+        super().xform_q(q)
+        self.re_sequencer()
     def triangulate_mesh_contour(self, mode = 0):
         """ fanning style mesh """
         if mode == 0:
